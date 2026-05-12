@@ -15,4 +15,6 @@
 
 <!-- 新条目追加到这里（上方） -->
 
+[2026-05-12 16:04] FIX 重新生成 Hermes Desktop 应用图标
+
 [2026-05-12 10:00] DECISION 项目 harness 初始化完成，Phase 0 四个功能录入 features.json → decisions/init.md
