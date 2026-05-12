@@ -67,9 +67,7 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete 
               className="session-delete"
               onClick={(e) => {
                 e.stopPropagation();
-                if (confirm(`Delete session "${s.title || s.id}"?`)) {
-                  onDelete(s.id);
-                }
+                onDelete(s.id);
               }}
               title="Delete session"
             >
