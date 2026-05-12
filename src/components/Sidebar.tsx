@@ -39,7 +39,7 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete 
 
       <div className="session-list">
         {sessions.length === 0 && (
-          <div style={{ padding: "16px 12px", color: "var(--text-muted)", fontSize: 11 }}>
+          <div style={{ padding: "16px 12px", color: "var(--muted)", fontSize: 11 }}>
             No sessions yet.
             <br />
             Start a conversation!
@@ -82,10 +82,10 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete 
       <div
         style={{
           padding: "8px 12px",
-          borderTop: "1px solid var(--border)",
+          borderTop: "1px solid var(--hairline)",
           fontSize: 10,
-          color: "var(--text-muted)",
-          fontFamily: "'Outfit', sans-serif",
+          color: "var(--muted)",
+          fontFamily: "'Inter', sans-serif",
         }}
       >
         {sessions.length} session{sessions.length !== 1 ? "s" : ""}

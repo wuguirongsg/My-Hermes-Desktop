@@ -122,7 +122,7 @@ export default function ChatView({ messages, streaming, onSend, error, hasSessio
           >
             {streaming ? (
               <>
-                <span className="loading-dots" style={{ color: "var(--amber)" }} />
+                <span className="loading-dots" style={{ color: "var(--primary)" }} />
               </>
             ) : (
               <>Send ↵</>
@@ -137,7 +137,7 @@ export default function ChatView({ messages, streaming, onSend, error, hasSessio
             <kbd>Shift+Enter</kbd> for newline
           </span>
           {streaming && (
-            <span style={{ color: "var(--amber)", marginLeft: "auto" }}>
+            <span style={{ color: "var(--primary)", marginLeft: "auto" }}>
               ● Agent running...
             </span>
           )}

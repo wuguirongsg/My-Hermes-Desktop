@@ -14,7 +14,7 @@ function ThinkBlock({ content }: { content: string }) {
         <span style={{ fontSize: 12 }}>🧠</span>
         <span className="think-label ui-font">Thinking</span>
         {content && (
-          <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 4 }}>
+          <span style={{ fontSize: 10, color: "var(--muted)", marginLeft: 4 }}>
             {content.split(/\s+/).length} words
           </span>
         )}
@@ -48,7 +48,7 @@ function ToolBlock({ block }: { block: ToolCallBlock }) {
         <span className="tool-icon">⚙</span>
         <span className="tool-name ui-font">{block.name}</span>
         {!block.outputDone && !open && (
-          <span style={{ fontSize: 10, color: "var(--text-muted)" }} className="loading-dots" />
+          <span style={{ fontSize: 10, color: "var(--muted)" }} className="loading-dots" />
         )}
         {block.outputDone && (
           <span className="tool-badge">done</span>
@@ -74,7 +74,7 @@ function ToolBlock({ block }: { block: ToolCallBlock }) {
             </div>
           )}
           {!block.input && !block.output && (
-            <div className="tool-section input" style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+            <div className="tool-section input" style={{ color: "var(--muted)", fontStyle: "italic" }}>
               Executing<span className="loading-dots" />
             </div>
           )}
@@ -149,7 +149,7 @@ export default function MessageBubble({ message, isLastAssistant, streaming }: P
       </div>
       <div className="message-bubble assistant">
         {!hasContent && isStreaming && (
-          <span style={{ color: "var(--text-muted)", fontStyle: "italic" }}>
+          <span style={{ color: "var(--muted)", fontStyle: "italic" }}>
             Thinking<span className="loading-dots" />
           </span>
         )}
