@@ -91,6 +91,8 @@ pub fn run() {
             commands::chat::get_hermes_info,
             commands::chat::get_hermes_model_config,
             commands::chat::set_hermes_model,
+            commands::setup::check_hermes_setup,
+            commands::setup::open_install_terminal,
             commands::memory::read_memory,
             commands::memory::save_memory,
             commands::dashboard::dashboard_start,

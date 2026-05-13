@@ -1,8 +1,19 @@
+import { useCallback, useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import ChatPage from "./pages/ChatPage";
 import MemoryPage from "./pages/MemoryPage";
 import DashboardPage from "./pages/DashboardPage";
+import OnboardingPage, { type HermesSetupStatus } from "./pages/OnboardingPage";
+
+function setupErrorMessage(error: unknown) {
+  const message = String(error);
+  if (message.includes("invoke") || message.includes("__TAURI")) {
+    return "未检测到 Hermes CLI，请完成安装后重新检测。";
+  }
+  return message;
+}
 
 // ChatPage holds long-lived per-session state (running chats, queues, the
 // hermes:chunk listener). Unmounting it on route change would orphan running
@@ -11,6 +22,53 @@ import DashboardPage from "./pages/DashboardPage";
 function AppShell() {
   const location = useLocation();
   const isChat = location.pathname === "/";
+  const [checkingSetup, setCheckingSetup] = useState(true);
+  const [setup, setSetup] = useState<HermesSetupStatus | null>(null);
+  const [ready, setReady] = useState(false);
+
+  const checkSetup = useCallback(async () => {
+    setCheckingSetup(true);
+    try {
+      const nextSetup = await invoke<HermesSetupStatus>("check_hermes_setup");
+      setSetup(nextSetup);
+      if (nextSetup.installed) {
+        window.localStorage.setItem("hermes.onboarding.complete", "true");
+        setReady(true);
+      } else {
+        setReady(false);
+      }
+    } catch (e) {
+      setSetup({
+        installed: false,
+        version: "",
+        hermes_home: "",
+        config_exists: false,
+        api_key_configured: false,
+        configured_providers: [],
+        error: setupErrorMessage(e),
+      });
+      setReady(false);
+    } finally {
+      setCheckingSetup(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkSetup();
+  }, [checkSetup]);
+
+  if (checkingSetup && !setup && !ready) {
+    return (
+      <div className="setup-loading">
+        <span className="loading-dots" style={{ fontSize: 20 }} />
+        <div className="dashboard-loading-text ui-font">正在检测 Hermes CLI…</div>
+      </div>
+    );
+  }
+
+  if (!ready) {
+    return <OnboardingPage setup={setup} checking={checkingSetup} onRetry={checkSetup} />;
+  }
 
   return (
     <div className="app-shell">

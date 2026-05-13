@@ -15,6 +15,8 @@
 
 <!-- 新条目追加到这里（上方） -->
 
+[2026-05-13 22:19] DONE feat-110 首次使用引导 — Hermes CLI 安装检测 + 三步引导页 + 终端安装入口 → sessions/2026-05-13-2219.md
+
 [2026-05-13 15:37] FIX 修复多会话流式输出重复与 raw 终端格式污染
 
 [2026-05-13 14:30] DONE feat-104 多会话并发架构 — StreamChunk 附加 session_id，前端 per-session 状态隔离，全局 listener 按 session 路由，Sidebar 显示 running/queued/done 徽章，streaming 时可自由切换会话 → sessions/2026-05-13-1424.md
