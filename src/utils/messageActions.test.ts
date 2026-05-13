@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Message } from "../types";
-import { removeLastTurn } from "./messageActions";
+import { getLastUserText, removeLastTurn } from "./messageActions";
 
 function message(id: string, role: Message["role"]): Message {
   return {
@@ -25,5 +25,18 @@ describe("removeLastTurn", () => {
       "user-1",
       "assistant-1",
     ]);
+  });
+});
+
+describe("getLastUserText", () => {
+  it("returns the latest user text content", () => {
+    const messages = [
+      message("user-1", "user"),
+      message("assistant-1", "assistant"),
+      message("user-2", "user"),
+      message("assistant-2", "assistant"),
+    ];
+
+    expect(getLastUserText(messages)).toBe("user-2");
   });
 });

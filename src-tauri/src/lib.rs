@@ -40,6 +40,12 @@ pub struct AppState {
     pub pty_writers: std::sync::Mutex<
         std::collections::HashMap<String, Box<dyn std::io::Write + Send>>,
     >,
+    pub pty_masters: std::sync::Mutex<
+        std::collections::HashMap<String, Box<dyn portable_pty::MasterPty + Send>>,
+    >,
+    pub pty_children: std::sync::Mutex<
+        std::collections::HashMap<String, Box<dyn portable_pty::Child + Send + Sync>>,
+    >,
     pub dashboard_child: std::sync::Mutex<Option<std::process::Child>>,
 }
 
@@ -47,6 +53,8 @@ impl AppState {
     pub fn new() -> Self {
         AppState {
             pty_writers: std::sync::Mutex::new(std::collections::HashMap::new()),
+            pty_masters: std::sync::Mutex::new(std::collections::HashMap::new()),
+            pty_children: std::sync::Mutex::new(std::collections::HashMap::new()),
             dashboard_child: std::sync::Mutex::new(None),
         }
     }
@@ -77,6 +85,7 @@ pub fn run() {
             commands::sessions::get_session_history,
             commands::sessions::delete_session,
             commands::sessions::rename_session,
+            commands::sessions::undo_last_turn,
             commands::chat::send_message,
             commands::chat::get_hermes_info,
             commands::chat::get_hermes_model_config,

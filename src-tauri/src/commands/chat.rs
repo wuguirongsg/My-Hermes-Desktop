@@ -139,6 +139,11 @@ pub async fn send_message(
 
 // ─── set_hermes_model: directly edit config.yaml ────────────────────────────
 
+fn normalize_model_id(provider: &str, model: &str) -> String {
+    let prefix = format!("{provider}:");
+    model.strip_prefix(&prefix).unwrap_or(model).to_string()
+}
+
 fn rewrite_model_section(yaml: &str, new_provider: &str, new_model: &str) -> String {
     let mut lines: Vec<String> = Vec::new();
     let mut in_model = false;
@@ -175,6 +180,7 @@ pub async fn set_hermes_model(provider: String, model: String) -> Result<(), Str
     let path = home.join("config.yaml");
     let text = std::fs::read_to_string(&path)
         .map_err(|e| format!("Cannot read config.yaml: {e}"))?;
+    let model = normalize_model_id(&provider, &model);
     let updated = rewrite_model_section(&text, &provider, &model);
     std::fs::write(&path, updated)
         .map_err(|e| format!("Cannot write config.yaml: {e}"))

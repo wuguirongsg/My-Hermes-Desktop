@@ -16,6 +16,7 @@ export default function TerminalPanel({ sessionId, onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const sizeRef = useRef<{ rows: number; cols: number } | null>(null);
   const ptyId = useRef(`pty-${Date.now()}`);
   const unlistenRef = useRef<(() => void) | null>(null);
 
@@ -26,6 +27,9 @@ export default function TerminalPanel({ sessionId, onClose }: Props) {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    let disposed = false;
+    let openFrame: number | null = null;
+    let resizeFrame: number | null = null;
 
     const term = new Terminal({
       cursorBlink: true,
@@ -50,32 +54,53 @@ export default function TerminalPanel({ sessionId, onClose }: Props) {
     term.loadAddon(fitAddon);
     term.loadAddon(new WebLinksAddon());
     term.open(containerRef.current);
-    fitAddon.fit();
     termRef.current = term;
     fitAddonRef.current = fitAddon;
 
-    const { rows, cols } = term;
-    invoke("pty_open", { ptyId: ptyId.current, sessionId, rows, cols })
-      .catch((e) => term.writeln(`\r\n\x1b[31mFailed to open terminal: ${e}\x1b[0m`));
-
     listen<string>(`pty:${ptyId.current}`, (event) => {
       term.write(event.payload);
-    }).then((u) => { unlistenRef.current = u; });
+    }).then((u) => {
+      if (disposed) {
+        u();
+      } else {
+        unlistenRef.current = u;
+      }
+    });
 
     term.onData((data) => {
       invoke("pty_write", { ptyId: ptyId.current, data }).catch(() => {});
     });
 
-    const ro = new ResizeObserver(() => {
+    openFrame = window.requestAnimationFrame(() => {
       fitAddon.fit();
       const { rows, cols } = term;
-      invoke("pty_resize", { ptyId: ptyId.current, rows, cols }).catch(() => {});
+      sizeRef.current = { rows, cols };
+      invoke("pty_open", { ptyId: ptyId.current, sessionId, rows, cols })
+        .catch((e) => term.writeln(`\r\n\x1b[31mFailed to open terminal: ${e}\x1b[0m`));
+    });
+
+    const ro = new ResizeObserver(() => {
+      if (resizeFrame !== null) {
+        window.cancelAnimationFrame(resizeFrame);
+      }
+      resizeFrame = window.requestAnimationFrame(() => {
+        fitAddon.fit();
+        const { rows, cols } = term;
+        const prev = sizeRef.current;
+        if (prev?.rows === rows && prev?.cols === cols) return;
+        sizeRef.current = { rows, cols };
+        invoke("pty_resize", { ptyId: ptyId.current, rows, cols }).catch(() => {});
+      });
     });
     ro.observe(containerRef.current);
 
     return () => {
+      disposed = true;
+      if (openFrame !== null) window.cancelAnimationFrame(openFrame);
+      if (resizeFrame !== null) window.cancelAnimationFrame(resizeFrame);
       ro.disconnect();
       unlistenRef.current?.();
+      unlistenRef.current = null;
       invoke("pty_close", { ptyId: ptyId.current }).catch(() => {});
       term.dispose();
     };
@@ -86,9 +111,9 @@ export default function TerminalPanel({ sessionId, onClose }: Props) {
       <div className="terminal-panel-header">
         <span className="terminal-panel-title">
           <Icon name="terminal" size={14} />
-          Hermes Terminal
+          Hermes TUI
         </span>
-        <span className="terminal-panel-hint">支持所有 slash 命令（/compact、/help 等）</span>
+        <span className="terminal-panel-hint">交互式 TUI，会接入当前会话</span>
         <button className="terminal-panel-close" onClick={doClose} title="关闭终端">
           <Icon name="close" size={14} />
         </button>

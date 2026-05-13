@@ -15,7 +15,7 @@
 
 <!-- 新条目追加到这里（上方） -->
 
-[2026-05-13 12:30] FIX feat-103 修复重试/撤销气泡污染 — 重试用 hideUserMessage 静默发送，撤销 fire-and-forget /undo 不产生 UI 气泡
+[2026-05-13 12:22] FIX feat-103 修复重试/撤销执行错误 — 避免 chat -q 吞掉 slash 命令，改用会话文件回滚 + 静默重发
 
 [2026-05-13 11:52] DONE feat-103 消息快捷操作 — 最后一条 assistant 消息 hover 提供重试/撤销按钮 → sessions/2026-05-13-1152.md
 

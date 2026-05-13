@@ -7,6 +7,7 @@ type IconName =
   | "chevronRight"
   | "close"
   | "command"
+  | "copy"
   | "dashboard"
   | "edit"
   | "keyboard"
@@ -55,6 +56,12 @@ const paths: Record<IconName, JSX.Element> = {
     <>
       <path d="M9 9H7.5A2.5 2.5 0 1 1 10 6.5V18a2.5 2.5 0 1 1-2.5-2.5H18" />
       <path d="M15 9h1.5A2.5 2.5 0 1 0 14 6.5V18a2.5 2.5 0 1 0 2.5-2.5H6" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="8" y="8" width="11" height="11" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />
     </>
   ),
   dashboard: (

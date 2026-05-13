@@ -133,12 +133,14 @@ interface Props {
   isLastAssistant: boolean;
   streaming: boolean;
   onRetry: () => void;
-  onUndo: () => void;
 }
 
 function formatTime(iso: string): string {
   try {
-    return new Date(iso).toLocaleTimeString("zh-CN", {
+    if (!iso) return "";
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString("zh-CN", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -147,10 +149,29 @@ function formatTime(iso: string): string {
   }
 }
 
-export default function MessageBubble({ message, isLastAssistant, streaming, onRetry, onUndo }: Props) {
+function messageToMarkdown(message: Message): string {
+  const parts = message.blocks
+    .filter((block) => block.type === "text")
+    .map((block) => block.content.trim())
+    .filter(Boolean);
+
+  if (parts.length > 0) return parts.join("\n\n");
+  return message.rawOutput?.trim() ?? "";
+}
+
+export default function MessageBubble({ message, isLastAssistant, streaming, onRetry }: Props) {
+  const [copied, setCopied] = useState(false);
   const isUser = message.role === "user";
   const isStreaming = streaming && isLastAssistant && message.status === "streaming";
   const showActions = isLastAssistant && !streaming && message.status === "done";
+
+  const copyMarkdown = async () => {
+    const markdown = messageToMarkdown(message);
+    if (!markdown) return;
+    await navigator.clipboard.writeText(markdown);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  };
 
   if (isUser) {
     const text = message.blocks
@@ -192,8 +213,9 @@ export default function MessageBubble({ message, isLastAssistant, streaming, onR
               <Icon name="refresh" size={12} />
               重试
             </button>
-            <button className="message-action-btn danger" onClick={onUndo} title="撤销这一轮">
-              撤销这轮
+            <button className="message-action-btn" onClick={copyMarkdown} title="复制为 Markdown">
+              <Icon name="copy" size={12} />
+              {copied ? "已复制" : "复制 MD"}
             </button>
           </div>
         )}

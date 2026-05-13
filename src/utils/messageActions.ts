@@ -1,5 +1,18 @@
 import type { Message } from "../types";
 
+export function getLastUserText(messages: Message[]): string | null {
+  const lastUser = [...messages].reverse().find((message) => message.role === "user");
+  if (!lastUser) return null;
+
+  const text = lastUser.blocks
+    .filter((block) => block.type === "text")
+    .map((block) => block.content)
+    .join("\n")
+    .trim();
+
+  return text || null;
+}
+
 export function removeLastTurn(messages: Message[]): Message[] {
   const assistantIndex = [...messages]
     .reverse()

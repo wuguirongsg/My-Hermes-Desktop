@@ -24,6 +24,11 @@ interface Props {
   onNewSession: () => void;
 }
 
+function normalizeModelId(provider: string, model: string) {
+  const prefix = `${provider}:`;
+  return model.startsWith(prefix) ? model.slice(prefix.length) : model;
+}
+
 export default function ModelPicker({ currentModel, onNewSession }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -60,11 +65,12 @@ export default function ModelPicker({ currentModel, onNewSession }: Props) {
   }, [open]);
 
   const applyModel = useCallback(async (provider: string, model: string) => {
-    setPendingModel(`${provider}:${model}`);
+    const normalizedModel = normalizeModelId(provider, model);
+    setPendingModel(`${provider}:${normalizedModel}`);
     setOpen(false);
     setSearch("");
     try {
-      await invoke("set_hermes_model", { provider, model });
+      await invoke("set_hermes_model", { provider, model: normalizedModel });
       loadConfig();
       // Start a new session so the new model takes effect immediately
       onNewSession();
@@ -141,19 +147,20 @@ export default function ModelPicker({ currentModel, onNewSession }: Props) {
               <div key={group.provider} className="model-picker-group">
                 <div className="model-picker-group-label">{group.provider}</div>
                 {group.models.map((model) => {
-                  const fullName = `${group.provider}:${model}`;
+                  const modelId = normalizeModelId(group.provider, model);
+                  const fullName = `${group.provider}:${modelId}`;
                   const isCurrent =
                     (pendingModel ?? currentModel) === fullName ||
-                    (pendingModel ?? currentModel)?.endsWith(model) ||
-                    (!pendingModel && !currentModel && config?.current_model === model);
+                    (pendingModel ?? currentModel)?.endsWith(modelId) ||
+                    (!pendingModel && !currentModel && config?.current_model === modelId);
                   return (
                     <button
                       key={model}
                       className={`model-picker-item${isCurrent ? " active" : ""}`}
-                      onClick={() => handleSelect(group.provider, model)}
+                      onClick={() => handleSelect(group.provider, modelId)}
                     >
                       <span className="model-picker-check">{isCurrent ? "●" : ""}</span>
-                      {model}
+                      {modelId}
                     </button>
                   );
                 })}

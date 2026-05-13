@@ -8,7 +8,6 @@ interface Props {
   streaming: boolean;
   onSend: (text: string) => void;
   onRetryLastMessage: () => void;
-  onUndoLastTurn: () => void;
   error: string | null;
   hasSession: boolean;
 }
@@ -18,7 +17,6 @@ export default function ChatView({
   streaming,
   onSend,
   onRetryLastMessage,
-  onUndoLastTurn,
   error,
   hasSession,
 }: Props) {
@@ -95,7 +93,6 @@ export default function ChatView({
               isLastAssistant={msg.id === lastAssistantId}
               streaming={streaming}
               onRetry={onRetryLastMessage}
-              onUndo={onUndoLastTurn}
             />
           ))}
           {error && (

@@ -67,3 +67,5 @@
 ### Session 中新发现
 
 （格式：`[YYYY-MM-DD] 描述 — 原因`）
+
+- [2026-05-13] `hermes chat -q <slash>` 不会经过交互式 CLI 的 slash command handler，`/undo`、`/title` 等会被当作普通消息发给模型 — 一次性进程模式绕过了交互式 CLI 前端循环

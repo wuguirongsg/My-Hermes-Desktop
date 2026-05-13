@@ -3,6 +3,14 @@ use portable_pty::{CommandBuilder, PtySize, native_pty_system};
 use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter, State};
 
+fn close_pty_handles(state: &AppState, pty_id: &str) {
+    if let Some(mut child) = state.pty_children.lock().unwrap().remove(pty_id) {
+        let _ = child.kill();
+    }
+    state.pty_writers.lock().unwrap().remove(pty_id);
+    state.pty_masters.lock().unwrap().remove(pty_id);
+}
+
 #[tauri::command]
 pub fn pty_open(
     app: AppHandle,
@@ -12,6 +20,8 @@ pub fn pty_open(
     rows: u16,
     cols: u16,
 ) -> Result<(), String> {
+    close_pty_handles(&state, &pty_id);
+
     let pty_system = native_pty_system();
     let pair = pty_system
         .openpty(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
@@ -19,6 +29,7 @@ pub fn pty_open(
 
     let mut cmd = CommandBuilder::new("hermes");
     cmd.arg("chat");
+    cmd.arg("--tui");
     if let Some(ref id) = session_id {
         cmd.arg("--resume");
         cmd.arg(id);
@@ -29,10 +40,11 @@ pub fn pty_open(
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
 
     state.pty_writers.lock().unwrap().insert(pty_id.clone(), writer);
+    state.pty_masters.lock().unwrap().insert(pty_id.clone(), pair.master);
+    state.pty_children.lock().unwrap().insert(pty_id.clone(), child);
 
     let event_name = format!("pty:{}", pty_id);
     std::thread::spawn(move || {
-        let _child = child;
         let mut buf = [0u8; 4096];
         loop {
             match reader.read(&mut buf) {
@@ -68,8 +80,12 @@ pub fn pty_resize(
     rows: u16,
     cols: u16,
 ) -> Result<(), String> {
-    // portable-pty resize requires storing the MasterPty handle; best-effort no-op for now
-    let _ = (state, pty_id, rows, cols);
+    let masters = state.pty_masters.lock().unwrap();
+    if let Some(master) = masters.get(&pty_id) {
+        master
+            .resize(PtySize { rows, cols, pixel_width: 0, pixel_height: 0 })
+            .map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
@@ -78,6 +94,6 @@ pub fn pty_close(
     state: State<'_, AppState>,
     pty_id: String,
 ) -> Result<(), String> {
-    state.pty_writers.lock().unwrap().remove(&pty_id);
+    close_pty_handles(&state, &pty_id);
     Ok(())
 }

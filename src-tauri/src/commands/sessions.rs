@@ -32,6 +32,69 @@ fn write_title_map(map: &std::collections::HashMap<String, String>) -> Result<()
     std::fs::write(path, format!("{text}\n")).map_err(|e| e.to_string())
 }
 
+fn session_file_candidates(session_id: &str) -> Result<Vec<std::path::PathBuf>, String> {
+    let home = hermes_home().ok_or("Cannot find home dir")?;
+    let sessions_dir = home.join("sessions");
+    Ok(vec![
+        sessions_dir.join(format!("session_{}.json", session_id)),
+        sessions_dir.join(format!("{}.json", session_id)),
+        sessions_dir.join(format!("session_{}.jsonl", session_id)),
+        sessions_dir.join(format!("{}.jsonl", session_id)),
+    ])
+}
+
+fn remove_last_turn_from_session_value(session: &mut serde_json::Value) -> Result<(), String> {
+    let messages = session
+        .get_mut("messages")
+        .and_then(|value| value.as_array_mut())
+        .ok_or_else(|| "Session has no messages array".to_string())?;
+
+    let Some(last_user_index) = messages
+        .iter()
+        .rposition(|message| message.get("role").and_then(|role| role.as_str()) == Some("user"))
+    else {
+        return Ok(());
+    };
+
+    messages.truncate(last_user_index);
+    let next_count = messages.len() as u64;
+
+    if let Some(count) = session.get_mut("message_count") {
+        *count = serde_json::Value::Number(next_count.into());
+    }
+    if let Some(updated) = session.get_mut("last_updated") {
+        *updated = serde_json::Value::String(chrono::Local::now().naive_local().to_string());
+    }
+
+    Ok(())
+}
+
+fn remove_last_turn_from_jsonl(content: &str) -> Result<String, String> {
+    let mut messages: Vec<serde_json::Value> = content
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| serde_json::from_str(line).map_err(|e| e.to_string()))
+        .collect::<Result<_, _>>()?;
+
+    let Some(last_user_index) = messages
+        .iter()
+        .rposition(|message| message.get("role").and_then(|role| role.as_str()) == Some("user"))
+    else {
+        return Ok(content.to_string());
+    };
+
+    messages.truncate(last_user_index);
+    let lines = messages
+        .into_iter()
+        .map(|message| serde_json::to_string(&message).map_err(|e| e.to_string()))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(if lines.is_empty() {
+        String::new()
+    } else {
+        format!("{}\n", lines.join("\n"))
+    })
+}
+
 fn read_session_info(
     path: &std::path::Path,
     fs_updated: &str,
@@ -238,7 +301,7 @@ pub async fn rename_session(session_id: String, title: String) -> Result<(), Str
 #[tauri::command]
 pub async fn get_session_history(session_id: String) -> Result<serde_json::Value, String> {
     let out = Command::new("hermes")
-        .args(["sessions", "export", &session_id, "--format", "json"])
+        .args(["sessions", "export", "-", "--session-id", &session_id])
         .output();
 
     if let Ok(o) = out {
@@ -247,20 +310,22 @@ pub async fn get_session_history(session_id: String) -> Result<serde_json::Value
             if let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) {
                 return Ok(v);
             }
+            let exported: Vec<serde_json::Value> = text
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                .filter_map(|line| serde_json::from_str::<serde_json::Value>(line).ok())
+                .collect();
+            if exported.len() == 1 {
+                return Ok(exported.into_iter().next().unwrap());
+            }
+            if !exported.is_empty() {
+                return Ok(serde_json::Value::Array(exported));
+            }
         }
     }
 
-    let home = hermes_home().ok_or("Cannot find home dir")?;
-    let sessions_dir = home.join("sessions");
-    let candidates = vec![
-        format!("session_{}.json", session_id),
-        format!("{}.json", session_id),
-        format!("session_{}.jsonl", session_id),
-        format!("{}.jsonl", session_id),
-    ];
-
-    for candidate in &candidates {
-        let p = sessions_dir.join(candidate);
+    for p in session_file_candidates(&session_id)? {
+        let candidate = p.file_name().and_then(|name| name.to_str()).unwrap_or("");
         if p.exists() {
             let content = std::fs::read_to_string(&p).map_err(|e| e.to_string())?;
             if candidate.ends_with(".jsonl") {
@@ -276,6 +341,33 @@ pub async fn get_session_history(session_id: String) -> Result<serde_json::Value
     }
 
     Ok(serde_json::Value::Array(vec![]))
+}
+
+#[tauri::command]
+pub async fn undo_last_turn(session_id: String) -> Result<(), String> {
+    for path in session_file_candidates(&session_id)? {
+        if !path.exists() {
+            continue;
+        }
+
+        let content = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+        let updated = if path.extension().map_or(false, |ext| ext == "jsonl") {
+            remove_last_turn_from_jsonl(&content)?
+        } else {
+            let mut session: serde_json::Value =
+                serde_json::from_str(&content).map_err(|e| e.to_string())?;
+            remove_last_turn_from_session_value(&mut session)?;
+            format!(
+                "{}\n",
+                serde_json::to_string_pretty(&session).map_err(|e| e.to_string())?
+            )
+        };
+
+        std::fs::write(&path, updated).map_err(|e| e.to_string())?;
+        return Ok(());
+    }
+
+    Err("Session file not found".into())
 }
 
 #[tauri::command]
@@ -308,4 +400,32 @@ pub async fn delete_session(session_id: String) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn remove_last_turn_truncates_from_last_user_message() {
+        let mut session = json!({
+            "message_count": 5,
+            "messages": [
+                { "role": "user", "content": "first" },
+                { "role": "assistant", "content": "first reply" },
+                { "role": "user", "content": "second" },
+                { "role": "assistant", "content": "", "tool_calls": [] },
+                { "role": "tool", "content": "{}" }
+            ]
+        });
+
+        remove_last_turn_from_session_value(&mut session).unwrap();
+
+        let messages = session["messages"].as_array().unwrap();
+        assert_eq!(messages.len(), 2);
+        assert_eq!(session["message_count"], 2);
+        assert_eq!(messages[0]["content"], "first");
+        assert_eq!(messages[1]["content"], "first reply");
+    }
 }
