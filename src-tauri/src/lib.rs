@@ -93,6 +93,7 @@ pub fn run() {
             commands::chat::set_hermes_model,
             commands::setup::check_hermes_setup,
             commands::setup::open_install_terminal,
+            commands::setup::open_setup_terminal,
             commands::memory::read_memory,
             commands::memory::save_memory,
             commands::dashboard::dashboard_start,

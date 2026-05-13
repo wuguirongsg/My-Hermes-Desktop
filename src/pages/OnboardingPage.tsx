@@ -12,7 +12,8 @@ export interface HermesSetupStatus {
   error: string;
 }
 
-const INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash";
+const INSTALL_CMD = "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash";
+const SETUP_CMD = "hermes setup";
 
 async function writeClipboardText(text: string) {
   try {
@@ -49,24 +50,24 @@ interface Props {
 }
 
 export default function OnboardingPage({ setup, checking, onRetry, onContinue }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [copiedCommand, setCopiedCommand] = useState<"install" | "setup" | null>(null);
   const [terminalError, setTerminalError] = useState("");
 
-  const copyInstallCommand = async () => {
+  const copyCommand = async (kind: "install" | "setup", command: string) => {
     setTerminalError("");
-    const ok = await writeClipboardText(INSTALL_CMD);
+    const ok = await writeClipboardText(command);
     if (ok) {
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      setCopiedCommand(kind);
+      window.setTimeout(() => setCopiedCommand(null), 1800);
     } else {
       setTerminalError("复制失败，请手动选择安装命令复制。");
     }
   };
 
-  const openTerminal = async () => {
+  const openTerminal = async (command: "open_install_terminal" | "open_setup_terminal") => {
     setTerminalError("");
     try {
-      await invoke("open_install_terminal");
+      await invoke(command);
     } catch (e) {
       setTerminalError(String(e));
     }
@@ -86,7 +87,7 @@ export default function OnboardingPage({ setup, checking, onRetry, onContinue }:
           <p className="onboarding-kicker ui-font">Hermes Desktop</p>
           <h1 className="onboarding-title">开始使用 Hermes</h1>
           <p className="onboarding-subtitle">
-            桌面端会先确认 Hermes CLI 可用。完成安装和 API Key 配置后，就可以直接进入对话。
+            桌面端会先确认 Hermes CLI 可用。按官方步骤完成安装和配置后，就可以直接进入对话。
           </p>
         </div>
       </section>
@@ -99,12 +100,12 @@ export default function OnboardingPage({ setup, checking, onRetry, onContinue }:
             <p>运行安装命令。完成后回到这里重新检测。</p>
             <div className="onboarding-command">
               <code>{INSTALL_CMD}</code>
-              <button className="guide-copy-btn ui-font" onClick={copyInstallCommand}>
-                {copied && <Icon name="check" size={12} />}
-                {copied ? "已复制" : "复制"}
+              <button className="guide-copy-btn ui-font" onClick={() => copyCommand("install", INSTALL_CMD)}>
+                {copiedCommand === "install" && <Icon name="check" size={12} />}
+                {copiedCommand === "install" ? "已复制" : "复制"}
               </button>
             </div>
-            <button className="onboarding-secondary-btn ui-font" onClick={openTerminal}>
+            <button className="onboarding-secondary-btn ui-font" onClick={() => openTerminal("open_install_terminal")}>
               <Icon name="terminal" size={14} />
               在终端中打开
             </button>
@@ -115,10 +116,21 @@ export default function OnboardingPage({ setup, checking, onRetry, onContinue }:
         <article className="onboarding-step">
           <div className="onboarding-step-index">2</div>
           <div className="onboarding-step-body">
-            <h2>配置 API Key</h2>
+            <h2>配置 Hermes</h2>
             <p>
-              在 <code>~/.hermes/.env</code> 中配置至少一个 provider，例如 OpenAI、Anthropic、OpenRouter 或 Gemini。
+              安装完成后运行官方配置向导，选择 provider、模型和 API Key。
             </p>
+            <div className="onboarding-command">
+              <code>{SETUP_CMD}</code>
+              <button className="guide-copy-btn ui-font" onClick={() => copyCommand("setup", SETUP_CMD)}>
+                {copiedCommand === "setup" && <Icon name="check" size={12} />}
+                {copiedCommand === "setup" ? "已复制" : "复制"}
+              </button>
+            </div>
+            <button className="onboarding-secondary-btn ui-font" onClick={() => openTerminal("open_setup_terminal")}>
+              <Icon name="terminal" size={14} />
+              打开配置向导
+            </button>
             <div className="onboarding-status-row">
               <span>当前检测</span>
               <strong>{providerText}</strong>

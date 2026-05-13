@@ -1,7 +1,8 @@
 use serde::Serialize;
 use std::process::Command;
 
-const INSTALL_CMD: &str = "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash";
+const INSTALL_CMD: &str = "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash";
+const SETUP_CMD: &str = "hermes setup";
 const API_KEY_NAMES: &[&str] = &[
     "ANTHROPIC_API_KEY",
     "OPENROUTER_API_KEY",
@@ -118,11 +119,10 @@ pub async fn check_hermes_setup() -> Result<HermesSetupStatus, String> {
     }
 }
 
-#[tauri::command]
-pub async fn open_install_terminal() -> Result<(), String> {
+fn open_terminal_with_command(command: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        let escaped = INSTALL_CMD.replace('\\', "\\\\").replace('"', "\\\"");
+        let escaped = command.replace('\\', "\\\\").replace('"', "\\\"");
         let script = format!(
             "tell application \"Terminal\"\nactivate\ndo script \"{}\"\nend tell",
             escaped
@@ -149,4 +149,14 @@ pub async fn open_install_terminal() -> Result<(), String> {
     {
         Err("当前平台暂不支持自动打开终端，请复制安装命令手动执行。".to_string())
     }
+}
+
+#[tauri::command]
+pub async fn open_install_terminal() -> Result<(), String> {
+    open_terminal_with_command(INSTALL_CMD)
+}
+
+#[tauri::command]
+pub async fn open_setup_terminal() -> Result<(), String> {
+    open_terminal_with_command(SETUP_CMD)
 }
