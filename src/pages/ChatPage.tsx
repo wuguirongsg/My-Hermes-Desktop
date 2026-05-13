@@ -167,6 +167,31 @@ export default function ChatPage() {
     [activeSessionId, handleNewSession, loadSessions]
   );
 
+  const handleRenameSession = useCallback(
+    async (id: string, title: string): Promise<boolean> => {
+      const nextTitle = title.trim();
+      if (!nextTitle) return false;
+
+      setError(null);
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === id ? { ...session, title: nextTitle } : session
+        )
+      );
+
+      try {
+        await invoke("rename_session", { sessionId: id, title: nextTitle });
+        await loadSessions();
+        return true;
+      } catch (e) {
+        setError(String(e));
+        await loadSessions();
+        return false;
+      }
+    },
+    [loadSessions]
+  );
+
   const handleSlashCommand = useCallback((text: string): boolean => {
     const cmd = text.trim().toLowerCase();
     if (!cmd.startsWith("/")) return false;
@@ -360,6 +385,7 @@ export default function ChatPage() {
         onSelect={handleSelectSession}
         onNew={handleNewSession}
         onDelete={handleDeleteSession}
+        onRename={handleRenameSession}
       />
       <div className="content-area">
         {terminalOpen && (

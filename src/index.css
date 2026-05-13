@@ -467,6 +467,10 @@ body {
   background: var(--surface-card);
   border-left-color: var(--primary);
 }
+.session-item.saving .session-item-title,
+.session-item.saving .session-title-input {
+  opacity: 0.65;
+}
 
 .session-item-title {
   font-size: 13px;
@@ -479,6 +483,22 @@ body {
 .session-item.active .session-item-title {
   color: var(--ink);
   font-weight: 500;
+}
+
+.session-title-input {
+  width: calc(100% - 30px);
+  height: 22px;
+  border: 1px solid var(--primary-disabled);
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 20px;
+  padding: 0 6px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-glow);
+  user-select: text;
 }
 
 .session-item-meta {

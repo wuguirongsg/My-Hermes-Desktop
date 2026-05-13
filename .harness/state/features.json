@@ -2,7 +2,7 @@
   "_readme": "只允许把 passes 从 false 改成 true。禁止删除条目或修改 description。违反视为严重错误。",
   "_project": "hermes-desktop",
   "_sprint": "Phase 1 — 斜杠命令图形化（Week 3～7）",
-  "_updated": "2026-05-12",
+  "_updated": "2026-05-13",
   "features": [
     {
       "id": "feat-000",
@@ -51,7 +51,7 @@
       "description": "会话标题编辑 — 侧边栏会话条目单击标题进入内联编辑，回车/失焦确认后发送 /title <name>，标题实时更新",
       "acceptance": "侧边栏点击会话标题可进入编辑状态；回车/失焦确认；发送 /title 命令成功；侧边栏标题实时更新",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-103",

@@ -76,6 +76,7 @@ pub fn run() {
             commands::sessions::list_sessions,
             commands::sessions::get_session_history,
             commands::sessions::delete_session,
+            commands::sessions::rename_session,
             commands::chat::send_message,
             commands::chat::get_hermes_info,
             commands::chat::get_hermes_model_config,

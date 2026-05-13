@@ -8,6 +8,7 @@ interface Props {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onRename: (id: string, title: string) => Promise<boolean>;
 }
 
 function formatDate(iso: string): string {
@@ -25,9 +26,14 @@ function formatDate(iso: string): string {
   }
 }
 
-export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete }: Props) {
+export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete, onRename }: Props) {
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const cancelEditRef = useRef(false);
 
   const requestDelete = (id: string) => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -45,6 +51,41 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete 
     if (timerRef.current) clearTimeout(timerRef.current);
     setPendingId(null);
   };
+
+  const startEdit = (session: Session) => {
+    cancelDelete();
+    cancelEditRef.current = false;
+    setEditingId(session.id);
+    setEditValue(session.title || "Untitled");
+  };
+
+  const finishEdit = async () => {
+    const id = editingId;
+    if (!id) return;
+    if (cancelEditRef.current) {
+      cancelEditRef.current = false;
+      setEditingId(null);
+      return;
+    }
+
+    const session = sessions.find((s) => s.id === id);
+    const nextTitle = editValue.trim();
+    const currentTitle = (session?.title || "Untitled").trim();
+    setEditingId(null);
+
+    if (!nextTitle || nextTitle === currentTitle) return;
+
+    setSavingId(id);
+    await onRename(id, nextTitle);
+    setSavingId((current) => (current === id ? null : current));
+  };
+
+  useEffect(() => {
+    if (editingId) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editingId]);
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -65,10 +106,46 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete 
         {sessions.map((s) => (
           <div
             key={s.id}
-            className={`session-item ${activeId === s.id ? "active" : ""}`}
-            onClick={() => { if (pendingId === s.id) cancelDelete(); else onSelect(s.id); }}
+            className={`session-item ${activeId === s.id ? "active" : ""} ${savingId === s.id ? "saving" : ""}`}
+            onClick={() => {
+              if (editingId === s.id) return;
+              if (pendingId === s.id) cancelDelete();
+              else onSelect(s.id);
+            }}
           >
-            <div className="session-item-title">{s.title || "Untitled"}</div>
+            {editingId === s.id ? (
+              <input
+                ref={inputRef}
+                className="session-title-input"
+                value={editValue}
+                maxLength={120}
+                onChange={(e) => setEditValue(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onBlur={() => { void finishEdit(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelEditRef.current = true;
+                    setEditingId(null);
+                  }
+                }}
+                aria-label="Edit session title"
+              />
+            ) : (
+              <div
+                className="session-item-title"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEdit(s);
+                }}
+                title="编辑会话标题"
+              >
+                {s.title || "Untitled"}
+              </div>
+            )}
             <div className="session-item-meta">
               <span>{formatDate(s.updated_at)}</span>
               {s.message_count !== undefined && <span>{s.message_count} msgs</span>}
