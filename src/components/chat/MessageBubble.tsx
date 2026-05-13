@@ -192,9 +192,7 @@ export default function MessageBubble({ message, isLastAssistant, streaming, onR
   }
 
   const hasContent = message.blocks.length > 0;
-  const showTerminal =
-    !isUser &&
-    ((isStreaming && message.rawOutput !== undefined) || message.status === "error");
+  const showTerminal = !isUser && message.status === "error";
 
   return (
     <div className="message-group fade-in">

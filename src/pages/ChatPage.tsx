@@ -291,10 +291,11 @@ export default function ChatPage() {
   }, [handleNewSession]);
 
   const sendToSession = useCallback(
-    async (text: string, targetSessionId: string, options?: { hideUserMessage?: boolean }) => {
+    async (text: string, targetSessionId: string | null, options?: { hideUserMessage?: boolean }) => {
       if (!text.trim()) return;
 
-      const sessionTag = targetSessionId ?? `new_${Date.now()}`;
+      const realSessionId = targetSessionId?.trim() || null;
+      const sessionTag = realSessionId ?? `new_${Date.now()}`;
 
       if (streamingSessions.has(sessionTag)) {
         setSessionQueues((prev) => ({
@@ -306,6 +307,10 @@ export default function ChatPage() {
       }
 
       if (handleSlashCommand(text)) return;
+
+      if (!realSessionId) {
+        setActiveSessionId(sessionTag);
+      }
 
       const userMsg: Message = {
         id: uid(),
@@ -344,7 +349,7 @@ export default function ChatPage() {
 
       try {
         await invoke("send_message", {
-          sessionId: targetSessionId,
+          sessionId: realSessionId,
           message: text.trim(),
           sessionTag,
         });
@@ -401,10 +406,10 @@ export default function ChatPage() {
   const handleSendMessage = useCallback(
     async (text: string, options?: { hideUserMessage?: boolean }) => {
       if (!activeSessionId && !text.trim().startsWith("/")) {
-      await sendToSession(text, "", options);
+        await sendToSession(text, null, options);
         return;
       }
-      await sendToSession(text, activeSessionId ?? "", options);
+      await sendToSession(text, activeSessionId, options);
     },
     [activeSessionId, sendToSession]
   );
@@ -437,6 +442,7 @@ export default function ChatPage() {
 
   useEffect(() => {
     let unlistenFn: (() => void) | null = null;
+    let cancelled = false;
 
     const setup = async () => {
       const unlisten = await listen<StreamChunk>("hermes:chunk", (event) => {
@@ -662,12 +668,17 @@ export default function ChatPage() {
         }
       });
 
+      if (cancelled) {
+        unlisten();
+        return;
+      }
       unlistenFn = unlisten;
     };
 
     setup();
 
     return () => {
+      cancelled = true;
       if (unlistenFn) unlistenFn();
     };
   }, []);

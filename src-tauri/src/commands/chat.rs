@@ -41,6 +41,7 @@ pub async fn send_message(
     let mut in_think = false;
     let mut in_footer = false;
     let mut in_diff = false;
+    let mut in_query_echo = false;
 
     for line_result in reader.lines() {
         let raw = line_result.map_err(|e| e.to_string())?;
@@ -48,6 +49,23 @@ pub async fn send_message(
         let trimmed = clean.trim();
 
         emit(&app, &session_tag, "raw", &clean);
+
+        // Hermes prints the submitted query before the actual response. That is
+        // useful in raw logs, but it should not be rendered as assistant text.
+        if trimmed.starts_with("Query:") {
+            in_query_echo = true;
+            continue;
+        }
+        if in_query_echo {
+            if trimmed.starts_with("Initializing ")
+                || trimmed.starts_with('\u{2183}')
+                || trimmed.starts_with('\u{21BB}')
+            {
+                in_query_echo = false;
+            } else {
+                continue;
+            }
+        }
 
         // ── Footer (session info after response) ──────────────────────────────
         if trimmed.starts_with("Resume this session with:") {
