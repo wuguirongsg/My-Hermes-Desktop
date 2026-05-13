@@ -717,6 +717,12 @@ body {
   color: var(--primary);
   flex-shrink: 0;
 }
+.model-picker-empty {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+}
 .model-picker-custom {
   display: flex;
   align-items: center;

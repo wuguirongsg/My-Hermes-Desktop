@@ -137,6 +137,82 @@ pub async fn send_message(
     Ok(())
 }
 
+// ─── Helpers for get_hermes_model_config ─────────────────────────────────────
+
+fn parse_model_section(yaml: &str) -> (String, String) {
+    let mut provider = String::new();
+    let mut default_model = String::new();
+    let mut in_model = false;
+
+    for line in yaml.lines() {
+        if line == "model:" {
+            in_model = true;
+            continue;
+        }
+        if in_model {
+            // A non-indented, non-empty line means we've left the model section
+            if !line.starts_with(' ') && !line.is_empty() {
+                break;
+            }
+            let t = line.trim();
+            if let Some(v) = t.strip_prefix("provider:") {
+                provider = v.trim().trim_matches('\'').trim_matches('"').to_string();
+            } else if let Some(v) = t.strip_prefix("default:") {
+                default_model = v.trim().trim_matches('\'').trim_matches('"').to_string();
+            }
+        }
+    }
+    (provider, default_model)
+}
+
+fn configured_providers_from_env(env: &str) -> Vec<String> {
+    const KEY_MAP: &[(&str, &str)] = &[
+        ("ANTHROPIC_API_KEY", "anthropic"),
+        ("OPENROUTER_API_KEY", "openrouter"),
+        ("OPENAI_API_KEY", "openai"),
+        ("OPENCODE_GO_API_KEY", "opencode-go"),
+        ("GEMINI_API_KEY", "gemini"),
+        ("HERMES_GATEWAY_TOKEN", "nous"),
+    ];
+    let mut providers = Vec::new();
+    for line in env.lines() {
+        let t = line.trim();
+        if t.starts_with('#') || t.is_empty() { continue; }
+        for (key, prov) in KEY_MAP {
+            if let Some(val) = t.strip_prefix(&format!("{}=", key)) {
+                let v = val.trim();
+                if !v.is_empty() && !providers.iter().any(|p: &String| p == prov) {
+                    providers.push(prov.to_string());
+                }
+            }
+        }
+    }
+    providers
+}
+
+#[tauri::command]
+pub async fn get_hermes_model_config() -> Result<serde_json::Value, String> {
+    let home = crate::commands::sessions::hermes_home()
+        .ok_or_else(|| "Cannot locate hermes home".to_string())?;
+
+    let config_text = std::fs::read_to_string(home.join("config.yaml")).unwrap_or_default();
+    let env_text    = std::fs::read_to_string(home.join(".env")).unwrap_or_default();
+
+    let (current_provider, current_model) = parse_model_section(&config_text);
+    let mut configured = configured_providers_from_env(&env_text);
+
+    // Always include the active provider even if its key isn't in .env
+    if !current_provider.is_empty() && !configured.contains(&current_provider) {
+        configured.insert(0, current_provider.clone());
+    }
+
+    Ok(serde_json::json!({
+        "current_provider": current_provider,
+        "current_model":    current_model,
+        "configured_providers": configured,
+    }))
+}
+
 #[tauri::command]
 pub async fn get_hermes_info() -> Result<serde_json::Value, String> {
     let version_out = Command::new("hermes")
