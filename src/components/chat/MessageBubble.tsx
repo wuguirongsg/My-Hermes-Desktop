@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { open as openUrl } from "@tauri-apps/plugin-shell";
 import { Message, ToolCallBlock } from "../../types";
 import Icon from "../Icon";
 
@@ -87,10 +88,24 @@ function ToolBlock({ block }: { block: ToolCallBlock }) {
 
 // ─── Text Block ───────────────────────────────────────────────────────────────
 
+const mdComponents = {
+  a: ({ href, children }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.preventDefault();
+        if (href) openUrl(href);
+      }}
+    >
+      {children}
+    </a>
+  ),
+};
+
 function TextBlock({ content, streaming }: { content: string; streaming: boolean }) {
   return (
     <div className="md-content selectable">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{content}</ReactMarkdown>
       {streaming && <span className="cursor-blink" />}
     </div>
   );
