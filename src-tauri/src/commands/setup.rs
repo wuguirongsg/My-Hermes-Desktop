@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::process::Command;
 
-const INSTALL_CMD: &str = "pip install 'hermes-agent[web,pty]'";
+const INSTALL_CMD: &str = "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash";
 const API_KEY_NAMES: &[&str] = &[
     "ANTHROPIC_API_KEY",
     "OPENROUTER_API_KEY",

@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import Icon from "../components/Icon";
 
 const DASHBOARD_URL = "http://127.0.0.1:9119";
-const INSTALL_CMD = "pip install 'hermes-agent[web,pty]'";
+const INSTALL_CMD = "curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash";
 
 type Status = "idle" | "starting" | "ready" | "error" | "missing";
 
