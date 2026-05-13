@@ -21,9 +21,10 @@ interface ModelConfig {
 
 interface Props {
   currentModel: string | undefined;
+  onNewSession: () => void;
 }
 
-export default function ModelPicker({ currentModel }: Props) {
+export default function ModelPicker({ currentModel, onNewSession }: Props) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [custom, setCustom] = useState("");
@@ -59,19 +60,18 @@ export default function ModelPicker({ currentModel }: Props) {
   }, [open]);
 
   const applyModel = useCallback(async (provider: string, model: string) => {
-    // Optimistic update immediately
     setPendingModel(`${provider}:${model}`);
     setOpen(false);
     setSearch("");
     try {
       await invoke("set_hermes_model", { provider, model });
-      // Reload config so "current" marker is accurate next open
       loadConfig();
+      // Start a new session so the new model takes effect immediately
+      onNewSession();
     } catch {
-      // Revert on failure
       setPendingModel(null);
     }
-  }, [loadConfig]);
+  }, [loadConfig, onNewSession]);
 
   const handleSelect = (provider: string, model: string) => {
     applyModel(provider, model);
@@ -183,7 +183,7 @@ export default function ModelPicker({ currentModel }: Props) {
           </div>
 
           <div className="model-picker-hint">
-            切换后下次对话自动生效；当前对话发 /reset 立即生效
+            切换后自动开启新会话
           </div>
         </div>
       )}

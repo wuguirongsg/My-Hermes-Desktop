@@ -10,9 +10,10 @@ interface Props {
   toolCallCount: number;
   onOpenTerminal: () => void;
   onSendMessage: (text: string) => void;
+  onNewSession: () => void;
 }
 
-export default function TopBar({ streaming, status, hermesVersion, toolCallCount, onOpenTerminal, onSendMessage }: Props) {
+export default function TopBar({ streaming, status, hermesVersion, toolCallCount, onOpenTerminal, onSendMessage, onNewSession }: Props) {
   const handleCompress = (focus: string) => {
     const cmd = focus ? `/compress ${focus}` : "/compress";
     onSendMessage(cmd);
@@ -43,7 +44,7 @@ export default function TopBar({ streaming, status, hermesVersion, toolCallCount
       <div className="topbar-divider" />
 
       {/* Model picker */}
-      <ModelPicker currentModel={status?.model} />
+      <ModelPicker currentModel={status?.model} onNewSession={onNewSession} />
 
       <div className="topbar-divider" />
 

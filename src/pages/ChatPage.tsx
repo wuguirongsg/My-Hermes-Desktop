@@ -352,6 +352,7 @@ export default function ChatPage() {
         toolCallCount={toolCallCount}
         onOpenTerminal={() => setTerminalOpen(true)}
         onSendMessage={handleSendMessage}
+        onNewSession={handleNewSession}
       />
       <Sidebar
         sessions={sessions}
