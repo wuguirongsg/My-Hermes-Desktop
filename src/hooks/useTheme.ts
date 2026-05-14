@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 export type Theme = "claude" | "apple" | "warp";
 
 const STORAGE_KEY = "hermes-theme";
-const CYCLE: Theme[] = ["claude", "apple", "warp"];
+export const THEMES: Theme[] = ["claude", "apple", "warp"];
 
 function applyTheme(theme: Theme) {
   if (theme === "apple" || theme === "warp") {
@@ -17,7 +17,7 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY) as Theme;
-      return CYCLE.includes(saved) ? saved : "claude";
+      return THEMES.includes(saved) ? saved : "claude";
     } catch {
       return "claude";
     }
@@ -31,7 +31,7 @@ export function useTheme() {
   }, [theme]);
 
   const toggle = () =>
-    setTheme((t) => CYCLE[(CYCLE.indexOf(t) + 1) % CYCLE.length]);
+    setTheme((t) => THEMES[(THEMES.indexOf(t) + 1) % THEMES.length]);
 
-  return { theme, toggle };
+  return { theme, setTheme, toggle };
 }

@@ -1,6 +1,7 @@
-import { useEffect, useRef, KeyboardEvent } from "react";
+import { useEffect, useRef, useState, KeyboardEvent } from "react";
 import { Message } from "../types";
 import Icon from "./Icon";
+import GuideBot from "./chat/GuideBot";
 import MessageBubble from "./chat/MessageBubble";
 
 interface Props {
@@ -14,6 +15,8 @@ interface Props {
   onRetryLastMessage: () => void;
   error: string | null;
   hasSession: boolean;
+  contextPct?: number;
+  onCompress?: () => void;
 }
 
 export default function ChatView({
@@ -27,9 +30,28 @@ export default function ChatView({
   onRetryLastMessage,
   error,
   hasSession,
+  contextPct,
+  onCompress,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // isTyping: user is actively typing in the textarea
+  const [isTyping, setIsTyping] = useState(false);
+
+  // justFinished: briefly true when streaming transitions from true → false
+  const [justFinished, setJustFinished] = useState(false);
+  const prevStreaming = useRef(streaming);
+
+  useEffect(() => {
+    if (!streaming && prevStreaming.current) {
+      setJustFinished(true);
+    }
+    prevStreaming.current = streaming;
+  }, [streaming]);
+
+  // longTask: heuristic — more than 6 user messages in this session
+  const longTask = messages.filter((m) => m.role === "user").length >= 6;
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -57,14 +79,20 @@ export default function ChatView({
       onSend(text);
     }
     if (textareaRef.current) textareaRef.current.value = "";
+    setIsTyping(false);
   };
 
-  // Auto-resize textarea
+  // Auto-resize textarea + track isTyping
   const handleInput = () => {
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
     ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+    setIsTyping(ta.value.length > 0);
+  };
+
+  const focusInput = () => {
+    textareaRef.current?.focus();
   };
 
   const lastAssistantIdx = [...messages]
@@ -127,6 +155,21 @@ export default function ChatView({
 
       {/* Input */}
       <div className="chat-input-area">
+        <GuideBot
+          messages={messages}
+          streaming={streaming}
+          queue={queue}
+          error={error}
+          hasSession={hasSession}
+          isTyping={isTyping}
+          justFinished={justFinished}
+          contextPct={contextPct}
+          longTask={longTask}
+          onFocusInput={focusInput}
+          onRetryLastMessage={onRetryLastMessage}
+          onCompress={onCompress}
+        />
+
         <div className="input-row">
           <textarea
             ref={textareaRef}

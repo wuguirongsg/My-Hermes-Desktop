@@ -6,6 +6,8 @@ import ChatPage from "./pages/ChatPage";
 import MemoryPage from "./pages/MemoryPage";
 import DashboardPage from "./pages/DashboardPage";
 import OnboardingPage, { type HermesSetupStatus } from "./pages/OnboardingPage";
+import SettingsPage from "./pages/SettingsPage";
+import { useTheme } from "./hooks/useTheme";
 
 function setupErrorMessage(error: unknown) {
   const message = String(error);
@@ -22,6 +24,7 @@ function setupErrorMessage(error: unknown) {
 function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
+  useTheme();
   const isChat = location.pathname === "/";
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [setup, setSetup] = useState<HermesSetupStatus | null>(null);
@@ -82,6 +85,7 @@ function AppShell() {
           <Routes>
             <Route path="/memory" element={<MemoryPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route
               path="/onboarding"
               element={

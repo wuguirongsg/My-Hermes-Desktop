@@ -15,6 +15,8 @@
 
 <!-- 新条目追加到这里（上方） -->
 
+[2026-05-14 11:00] FIX 模型选择器：读 auth.json credential_pool 显示 OAuth 配置的 openai-codex，补 fallback 模型列表，自定义输入框视觉区分搜索框
+
 [2026-05-13 23:10] FIX 美化流式终端预览 — raw 输出按命令/状态/错误/警告分色，补 live 标记和深色层次
 
 [2026-05-13 22:36] FIX 首次引导按官方首页调整为 install.sh + hermes setup 两步，并提供配置向导终端入口

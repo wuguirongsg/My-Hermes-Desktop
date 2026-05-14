@@ -1,23 +1,16 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme, type Theme } from "../hooks/useTheme";
 import Icon from "./Icon";
 
 const NAV_ITEMS = [
   { path: "/", icon: "message", label: "对话" },
   { path: "/memory", icon: "brain", label: "记忆" },
   { path: "/dashboard", icon: "dashboard", label: "管理" },
+  { path: "/settings", icon: "settings", label: "设置" },
 ] as const;
-
-const THEME_META: Record<Theme, { icon: "command" | "spark" | "terminal"; title: string }> = {
-  claude: { icon: "spark",    title: "切换到 Apple 风格" },
-  apple:  { icon: "terminal", title: "切换到 Warp 风格" },
-  warp:   { icon: "command",  title: "切换到 Claude 风格" },
-};
 
 export default function NavBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, toggle } = useTheme();
 
   return (
     <nav className="navbar">
@@ -34,23 +27,6 @@ export default function NavBar() {
       ))}
 
       <div className="navbar-spacer" />
-
-      <button
-        className={`navbar-theme-btn${location.pathname === "/onboarding" ? " active" : ""}`}
-        onClick={() => navigate("/onboarding")}
-        title="打开使用引导"
-      >
-        <Icon name="package" size={17} />
-      </button>
-
-      <button
-        className="navbar-theme-btn"
-        onClick={toggle}
-        title={THEME_META[theme].title}
-      >
-        <Icon name={THEME_META[theme].icon} size={17} />
-        <span className="theme-dot" />
-      </button>
     </nav>
   );
 }
