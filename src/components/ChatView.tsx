@@ -174,7 +174,6 @@ export default function ChatView({
         />
 
         <div className="input-row">
-          <PersonalityPicker onSend={onSend} />
           <textarea
             ref={textareaRef}
             className="chat-textarea"
@@ -231,12 +230,17 @@ export default function ChatView({
         )}
 
         <div className="input-hints ui-font">
-          <span>
-            <kbd>Enter</kbd> to {streaming ? "queue" : "send"}
-          </span>
-          <span>
-            <kbd>Shift+Enter</kbd> for newline
-          </span>
+          <div className="input-shortcuts">
+            <PersonalityPicker onSend={onSend} />
+          </div>
+          <div className="input-key-hints">
+            <span>
+              <kbd>Enter</kbd> to {streaming ? "queue" : "send"}
+            </span>
+            <span>
+              <kbd>Shift+Enter</kbd> for newline
+            </span>
+          </div>
           {streaming && (
             <span className="agent-running">
               <span className="agent-running-dot" />

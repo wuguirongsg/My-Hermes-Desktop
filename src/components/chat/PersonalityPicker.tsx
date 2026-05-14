@@ -81,8 +81,9 @@ export default function PersonalityPicker({ onSend }: Props) {
         aria-label="切换人格"
       >
         <span className="personality-trigger-icon">
-          <Icon name={currentPersona.icon} size={18} />
+          <Icon name={currentPersona.icon} size={13} />
         </span>
+        <span>人格</span>
       </button>
 
       {open && (
