@@ -11,6 +11,7 @@ interface Props {
   toolCallCount: number;
   sessionTitle: string | null;
   onOpenTerminal: () => void;
+  onOpenSnapshot: () => void;
   onSendMessage: (text: string) => void;
   onNewSession: () => void;
   onRenameSession: (title: string) => Promise<boolean>;
@@ -23,6 +24,7 @@ export default function TopBar({
   toolCallCount,
   sessionTitle,
   onOpenTerminal,
+  onOpenSnapshot,
   onSendMessage,
   onNewSession,
   onRenameSession,
@@ -176,6 +178,16 @@ export default function TopBar({
       <ContextBar status={status} onCompress={handleCompress} />
 
       <div className="topbar-spacer" />
+
+      {/* Snapshot button */}
+      <button
+        className="topbar-terminal-btn"
+        onClick={onOpenSnapshot}
+        title="快照时间线"
+      >
+        <Icon name="timer" size={14} />
+        快照
+      </button>
 
       {/* Terminal button */}
       <button

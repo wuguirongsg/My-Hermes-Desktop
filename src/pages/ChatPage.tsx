@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar";
 import TopBar from "../components/topbar/TopBar";
 import ChatView from "../components/ChatView";
 import TerminalPanel from "../components/TerminalPanel";
+import SnapshotPanel from "../components/SnapshotPanel";
 import { getLastUserText } from "../utils/messageActions";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -89,6 +90,7 @@ export default function ChatPage() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [hermesVersion, setHermesVersion] = useState<string>("");
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [snapshotPanelOpen, setSnapshotPanelOpen] = useState(false);
 
   // Per-session states
   const [sessionMessages, setSessionMessages] = useState<Record<string, Message[]>>({});
@@ -767,6 +769,7 @@ export default function ChatPage() {
         toolCallCount={toolCallCount}
         sessionTitle={activeSession?.title ?? null}
         onOpenTerminal={() => setTerminalOpen(true)}
+        onOpenSnapshot={() => setSnapshotPanelOpen((v) => !v)}
         onSendMessage={handleSendMessage}
         onNewSession={handleNewSession}
         onRenameSession={handleRenameSession}
@@ -782,6 +785,12 @@ export default function ChatPage() {
       <div className="content-area">
         {terminalOpen && (
           <TerminalPanel sessionId={activeSessionId} onClose={() => setTerminalOpen(false)} />
+        )}
+        {snapshotPanelOpen && (
+          <SnapshotPanel
+            onSend={handleSendMessage}
+            onClose={() => setSnapshotPanelOpen(false)}
+          />
         )}
         <ChatView
           messages={messages}
