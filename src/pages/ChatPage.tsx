@@ -111,6 +111,7 @@ export default function ChatPage() {
   const activeSessionIdRef = useRef(activeSessionId);
   const prevStreamingForQueueRef = useRef<Set<string>>(new Set());
   const exitConfirmedRef = useRef(false);
+  const bgRunningCountRef = useRef(0);
 
   // Derived values for current active session
   const activeSession = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null;
@@ -307,7 +308,10 @@ export default function ChatPage() {
     const tick = async () => {
       try {
         const n = await invoke<number>("bg_running_count");
-        if (!cancelled) setBgRunningCount(n);
+        if (!cancelled) {
+          setBgRunningCount(n);
+          bgRunningCountRef.current = n;
+        }
       } catch {
         /* ignore */
       }
@@ -320,23 +324,22 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Confirm before window close if background tasks are running
+  // Confirm before window close if background tasks are running.
+  // Handler must be synchronous — async handlers in Tauri 2 block the close
+  // event until the promise resolves, making the close button unresponsive if
+  // any invoke hangs. We read bgRunningCountRef (kept current by the poller
+  // above) instead of invoking bg_running_count here.
   useEffect(() => {
     let unlisten: (() => void) | null = null;
     let cancelled = false;
     (async () => {
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
       const win = getCurrentWindow();
-      const fn = await win.onCloseRequested(async (event) => {
+      const fn = await win.onCloseRequested((event) => {
         if (exitConfirmedRef.current) return;
-        try {
-          const n = await invoke<number>("bg_running_count");
-          if (n > 0 && bgExitConfirm === null) {
-            event.preventDefault();
-            setBgExitConfirm("keep");
-          }
-        } catch {
-          /* ignore */
+        if (bgRunningCountRef.current > 0) {
+          event.preventDefault();
+          setBgExitConfirm("keep");
         }
       });
       if (cancelled) {
@@ -349,7 +352,7 @@ export default function ChatPage() {
       cancelled = true;
       if (unlisten) unlisten();
     };
-  }, [bgExitConfirm]);
+  }, []);
 
   const handleExitConfirm = useCallback(async (action: "keep" | "kill") => {
     setBgExitConfirm(null);
