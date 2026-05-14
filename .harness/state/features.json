@@ -86,7 +86,7 @@
       "description": "快照时间线 — 右侧滑出面板（与后台任务面板共用，Tab 切换）；支持保存（/snapshot create）、列表（/snapshot list）、恢复（/snapshot restore，有确认弹层）、文件回滚（/rollback，展示变更文件列表）",
       "acceptance": "快照面板可保存/列出/恢复快照；恢复前弹确认；展开条目显示变更文件列表（+/- 行数）；/rollback 发送后展示回滚文件列表",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-107",
