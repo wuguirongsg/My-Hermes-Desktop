@@ -1,61 +1,72 @@
 import { useState, useEffect } from "react";
 import Icon from "./Icon";
 
-interface SnapshotFile {
-  path: string;
-  added: number;
-  removed: number;
-}
-
 interface Snapshot {
   id: string;
   label: string;
   createdAt: string;
-  files: SnapshotFile[];
+  sessionTitle: string;
   expanded: boolean;
 }
 
 interface Props {
   onSend: (text: string) => void;
   onClose: () => void;
+  sessionTitle?: string;
   externalCreateCount?: number;
 }
 
+const STORAGE_KEY = "hermes-snapshot-log";
 let snapshotCounter = 0;
 
 function makeId() {
   return `snap-${Date.now()}-${++snapshotCounter}`;
 }
 
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" });
+function loadFromStorage(): Snapshot[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
 }
 
-function formatDate(iso: string) {
+function formatDateTime(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
+  return d.toLocaleString("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-export default function SnapshotPanel({ onSend, onClose, externalCreateCount = 0 }: Props) {
+export default function SnapshotPanel({
+  onSend,
+  onClose,
+  sessionTitle = "未命名会话",
+  externalCreateCount = 0,
+}: Props) {
   const [tab, setTab] = useState<"snapshot" | "background">("snapshot");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [rollbackFiles, setRollbackFiles] = useState<SnapshotFile[] | null>(null);
+  const [snapshots, setSnapshots] = useState<Snapshot[]>(loadFromStorage);
+  const [confirmRestoreId, setConfirmRestoreId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [prevExternal, setPrevExternal] = useState(externalCreateCount);
 
-  // Sync snapshots created outside the panel (e.g. typed /snapshot create in chat)
+  // Persist to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshots));
+  }, [snapshots]);
+
+  // Sync entries created via chat input (/snapshot create sent directly)
   useEffect(() => {
     if (externalCreateCount > prevExternal) {
       const delta = externalCreateCount - prevExternal;
       setSnapshots((prev) => {
         let next = prev;
         for (let i = 0; i < delta; i++) {
-          const id = makeId();
-          next = [
-            { id, label: `快照 ${next.length + 1}`, createdAt: new Date().toISOString(), files: [], expanded: false },
-            ...next,
-          ];
+          next = [makeEntry(next.length + 1, sessionTitle), ...next];
         }
         return next;
       });
@@ -63,44 +74,50 @@ export default function SnapshotPanel({ onSend, onClose, externalCreateCount = 0
     setPrevExternal(externalCreateCount);
   }, [externalCreateCount]);
 
-  const addEntry = () => {
-    const id = makeId();
-    setSnapshots((prev) => [
-      { id, label: `快照 ${prev.length + 1}`, createdAt: new Date().toISOString(), files: [], expanded: false },
-      ...prev,
-    ]);
-  };
+  function makeEntry(index: number, title: string): Snapshot {
+    return {
+      id: makeId(),
+      label: `快照 ${index}`,
+      createdAt: new Date().toISOString(),
+      sessionTitle: title,
+      expanded: false,
+    };
+  }
 
   const handleSave = () => {
-    addEntry();
+    setSnapshots((prev) => [makeEntry(prev.length + 1, sessionTitle), ...prev]);
     onSend("/snapshot create");
   };
 
   const toggleExpand = (id: string) => {
     setSnapshots((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, expanded: !s.expanded } : s
-      )
+      prev.map((s) => (s.id === id ? { ...s, expanded: !s.expanded } : s))
     );
   };
 
   const handleRestore = (id: string) => {
-    if (confirmId === id) {
-      setConfirmId(null);
+    if (confirmRestoreId === id) {
+      setConfirmRestoreId(null);
       onSend(`/snapshot restore ${id}`);
     } else {
-      setConfirmId(id);
+      setConfirmRestoreId(id);
+      setConfirmDeleteId(null);
     }
   };
 
-  const handleRollback = () => {
-    // Optimistic: show placeholder changed files
-    const placeholder: SnapshotFile[] = [
-      { path: "src/components/ChatView.tsx", added: 0, removed: 12 },
-      { path: "src/index.css", added: 0, removed: 45 },
-    ];
-    setRollbackFiles(placeholder);
-    onSend("/rollback");
+  const handleDelete = (id: string) => {
+    if (confirmDeleteId === id) {
+      setSnapshots((prev) => prev.filter((s) => s.id !== id));
+      setConfirmDeleteId(null);
+    } else {
+      setConfirmDeleteId(id);
+      setConfirmRestoreId(null);
+    }
+  };
+
+  const cancelConfirm = () => {
+    setConfirmRestoreId(null);
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -129,45 +146,19 @@ export default function SnapshotPanel({ onSend, onClose, externalCreateCount = 0
       {/* Snapshot tab */}
       {tab === "snapshot" && (
         <div className="right-panel-body">
-          <div className="snapshot-toolbar">
-            <button className="snapshot-save-btn ui-font" onClick={handleSave}>
-              <Icon name="package" size={13} />
-              保存快照
-            </button>
-            {snapshots.length > 0 && (
-              <button className="snapshot-rollback-btn ui-font" onClick={handleRollback}>
-                回滚
-              </button>
-            )}
+          <button className="snapshot-save-btn ui-font" onClick={handleSave}>
+            <Icon name="package" size={13} />
+            保存快照
+          </button>
+
+          {/* Disclaimer */}
+          <div className="snapshot-notice ui-font">
+            仅为本地日志记录，不校验快照文件是否仍存在
           </div>
 
-          {/* Rollback result */}
-          {rollbackFiles && (
-            <div className="snapshot-rollback-result">
-              <div className="snapshot-rollback-title ui-font">
-                <Icon name="refresh" size={12} />
-                回滚变更文件
-              </div>
-              {rollbackFiles.map((f) => (
-                <div key={f.path} className="snapshot-file-row">
-                  <span className="snapshot-file-path">{f.path}</span>
-                  <span className="snapshot-file-stat removed">−{f.removed}</span>
-                </div>
-              ))}
-              <button
-                className="snapshot-dismiss-btn ui-font"
-                onClick={() => setRollbackFiles(null)}
-              >
-                关闭
-              </button>
-            </div>
-          )}
-
-          {/* Snapshot list */}
+          {/* List */}
           {snapshots.length === 0 ? (
-            <div className="snapshot-empty ui-font">
-              暂无快照，点击上方按钮保存当前状态
-            </div>
+            <div className="snapshot-empty ui-font">暂无记录</div>
           ) : (
             <div className="snapshot-list">
               {snapshots.map((snap) => (
@@ -186,57 +177,42 @@ export default function SnapshotPanel({ onSend, onClose, externalCreateCount = 0
                         color: "var(--muted-soft)",
                       }}
                     />
-                    <span className="snapshot-item-label ui-font">{snap.label}</span>
+                    <div className="snapshot-item-meta">
+                      <span className="snapshot-item-label ui-font">{snap.label}</span>
+                      <span className="snapshot-item-session ui-font">{snap.sessionTitle}</span>
+                    </div>
                     <span className="snapshot-item-time ui-font">
-                      {formatDate(snap.createdAt)} {formatTime(snap.createdAt)}
+                      {formatDateTime(snap.createdAt)}
                     </span>
                   </div>
 
                   {snap.expanded && (
                     <div className="snapshot-item-body">
-                      {snap.files.length === 0 ? (
-                        <div className="snapshot-files-empty ui-font">
-                          无文件变更记录
+                      {/* Confirm states */}
+                      {confirmRestoreId === snap.id && (
+                        <div className="snapshot-confirm-row">
+                          <span className="snapshot-confirm-label ui-font">确认恢复此快照？</span>
+                          <button className="snapshot-action-btn snapshot-action-confirm ui-font" onClick={() => handleRestore(snap.id)}>确认</button>
+                          <button className="snapshot-action-btn ui-font" onClick={cancelConfirm}>取消</button>
                         </div>
-                      ) : (
-                        snap.files.map((f) => (
-                          <div key={f.path} className="snapshot-file-row">
-                            <span className="snapshot-file-path">{f.path}</span>
-                            {f.added > 0 && (
-                              <span className="snapshot-file-stat added">+{f.added}</span>
-                            )}
-                            {f.removed > 0 && (
-                              <span className="snapshot-file-stat removed">−{f.removed}</span>
-                            )}
-                          </div>
-                        ))
                       )}
-                      <div className="snapshot-item-actions">
-                        {confirmId === snap.id ? (
-                          <>
-                            <span className="snapshot-confirm-label ui-font">确认恢复？</span>
-                            <button
-                              className="snapshot-action-btn snapshot-action-confirm ui-font"
-                              onClick={() => handleRestore(snap.id)}
-                            >
-                              确认
-                            </button>
-                            <button
-                              className="snapshot-action-btn ui-font"
-                              onClick={() => setConfirmId(null)}
-                            >
-                              取消
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            className="snapshot-action-btn ui-font"
-                            onClick={() => handleRestore(snap.id)}
-                          >
-                            恢复此快照
+                      {confirmDeleteId === snap.id && (
+                        <div className="snapshot-confirm-row">
+                          <span className="snapshot-confirm-label ui-font">删除此记录？</span>
+                          <button className="snapshot-action-btn snapshot-action-danger ui-font" onClick={() => handleDelete(snap.id)}>删除</button>
+                          <button className="snapshot-action-btn ui-font" onClick={cancelConfirm}>取消</button>
+                        </div>
+                      )}
+                      {!confirmRestoreId && !confirmDeleteId && (
+                        <div className="snapshot-item-actions">
+                          <button className="snapshot-action-btn ui-font" onClick={() => handleRestore(snap.id)}>
+                            恢复
                           </button>
-                        )}
-                      </div>
+                          <button className="snapshot-action-btn ui-font" onClick={() => handleDelete(snap.id)}>
+                            删除记录
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -249,9 +225,7 @@ export default function SnapshotPanel({ onSend, onClose, externalCreateCount = 0
       {/* Background tab placeholder */}
       {tab === "background" && (
         <div className="right-panel-body">
-          <div className="snapshot-empty ui-font">
-            后台任务功能即将推出
-          </div>
+          <div className="snapshot-empty ui-font">后台任务功能即将推出</div>
         </div>
       )}
     </div>

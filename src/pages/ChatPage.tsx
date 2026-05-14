@@ -797,6 +797,7 @@ export default function ChatPage() {
             onSend={handleSendMessage}
             onClose={() => setSnapshotPanelOpen(false)}
             externalCreateCount={snapshotCreateCount}
+            sessionTitle={activeSession?.title ?? "未命名会话"}
           />
         )}
         <ChatView
