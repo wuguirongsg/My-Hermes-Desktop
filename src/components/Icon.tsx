@@ -1,19 +1,27 @@
 import type { SVGProps } from "react";
 
-type IconName =
+export type IconName =
   | "alert"
+  | "book"
+  | "bot"
   | "brain"
   | "check"
   | "chevronRight"
   | "close"
   | "command"
   | "copy"
+  | "code"
   | "dashboard"
   | "edit"
+  | "flag"
+  | "graduation"
   | "keyboard"
   | "message"
   | "package"
+  | "palette"
   | "refresh"
+  | "scissors"
+  | "search"
   | "send"
   | "settings"
   | "spark"
@@ -32,6 +40,24 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M12 4.4 3.8 18.6a1.4 1.4 0 0 0 1.2 2.1h14a1.4 1.4 0 0 0 1.2-2.1L12 4.4Z" />
       <path d="M12 9v4.5" />
       <path d="M12 17.2h.01" />
+    </>
+  ),
+  book: (
+    <>
+      <path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h12.5v16H7a2.5 2.5 0 0 0-2.5 2.5v-16Z" />
+      <path d="M4.5 5.5v16" />
+      <path d="M8 7h7" />
+      <path d="M8 10h5" />
+    </>
+  ),
+  bot: (
+    <>
+      <rect x="5" y="7" width="14" height="11" rx="3" />
+      <path d="M12 7V4" />
+      <path d="M9 4h6" />
+      <path d="M9.2 12h.01" />
+      <path d="M14.8 12h.01" />
+      <path d="M9.5 15h5" />
     </>
   ),
   brain: (
@@ -65,6 +91,13 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" />
     </>
   ),
+  code: (
+    <>
+      <path d="m8 8-4 4 4 4" />
+      <path d="m16 8 4 4-4 4" />
+      <path d="m14 5-4 14" />
+    </>
+  ),
   dashboard: (
     <>
       <rect x="4" y="4" width="7" height="7" rx="1.5" />
@@ -77,6 +110,19 @@ const paths: Record<IconName, JSX.Element> = {
     <>
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+    </>
+  ),
+  flag: (
+    <>
+      <path d="M5 21V4" />
+      <path d="M5 5.5h10.5l-.8 3 3.3 2.2H5" />
+    </>
+  ),
+  graduation: (
+    <>
+      <path d="m3 8.5 9-4.5 9 4.5-9 4.5-9-4.5Z" />
+      <path d="M7 10.5v4.2c1.3 1.4 3 2.1 5 2.1s3.7-.7 5-2.1v-4.2" />
+      <path d="M21 9v5" />
     </>
   ),
   keyboard: (
@@ -100,12 +146,35 @@ const paths: Record<IconName, JSX.Element> = {
       <path d="M12 12v8.6" />
     </>
   ),
+  palette: (
+    <>
+      <path d="M12 3.5a8.5 8.5 0 0 0 0 17h1.2a1.8 1.8 0 0 0 1.2-3.1 1.8 1.8 0 0 1 1.2-3.1H17a4.5 4.5 0 0 0 4.5-4.5c0-3.5-3.5-6.3-9.5-6.3Z" />
+      <path d="M7.5 11h.01" />
+      <path d="M9.5 7.8h.01" />
+      <path d="M14 7.5h.01" />
+      <path d="M16.5 10.5h.01" />
+    </>
+  ),
   refresh: (
     <>
       <path d="M20 6v5h-5" />
       <path d="M4 18v-5h5" />
       <path d="M18.4 10A6.5 6.5 0 0 0 7 6.6L4 9.5" />
       <path d="M5.6 14A6.5 6.5 0 0 0 17 17.4l3-2.9" />
+    </>
+  ),
+  scissors: (
+    <>
+      <circle cx="6" cy="7" r="2.5" />
+      <circle cx="6" cy="17" r="2.5" />
+      <path d="M8.2 8.2 19 19" />
+      <path d="M8.2 15.8 19 5" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4 4" />
     </>
   ),
   send: (

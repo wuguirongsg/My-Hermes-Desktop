@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef } from "react";
-import Icon from "../Icon";
+import Icon, { type IconName } from "../Icon";
 
 interface Personality {
   id: string;
   name: string;
-  emoji: string;
+  icon: IconName;
   description: string;
 }
 
 const PERSONALITIES: Personality[] = [
-  { id: "helpful",  name: "助手",   emoji: "🤖", description: "均衡、专业，默认人格" },
-  { id: "concise",  name: "简洁",   emoji: "✂️", description: "极简回复，少废话" },
-  { id: "mentor",   name: "导师",   emoji: "🎓", description: "耐心引导，提问式启发" },
-  { id: "engineer", name: "工程师", emoji: "🛠", description: "直击代码与实现细节" },
-  { id: "scholar",  name: "学者",   emoji: "📚", description: "严谨、引经据典" },
-  { id: "creative", name: "创意",   emoji: "🎨", description: "天马行空、富有想象力" },
-  { id: "skeptic",  name: "质疑者", emoji: "🔍", description: "挑战假设、找漏洞" },
-  { id: "pirate",   name: "海盗",   emoji: "🏴‍☠️", description: "海盗腔调，趣味放松" },
+  { id: "helpful",  name: "助手",   icon: "bot",        description: "均衡、专业，默认人格" },
+  { id: "concise",  name: "简洁",   icon: "scissors",   description: "极简回复，少废话" },
+  { id: "mentor",   name: "导师",   icon: "graduation", description: "耐心引导，提问式启发" },
+  { id: "engineer", name: "工程师", icon: "code",       description: "直击代码与实现细节" },
+  { id: "scholar",  name: "学者",   icon: "book",       description: "严谨、引经据典" },
+  { id: "creative", name: "创意",   icon: "palette",    description: "天马行空、富有想象力" },
+  { id: "skeptic",  name: "质疑者", icon: "search",     description: "挑战假设、找漏洞" },
+  { id: "pirate",   name: "海盗",   icon: "flag",       description: "海盗腔调，趣味放松" },
 ];
 
 const STORAGE_KEY = "hermes-personality";
@@ -80,7 +80,9 @@ export default function PersonalityPicker({ onSend }: Props) {
         title={`当前人格：${currentPersona.name}`}
         aria-label="切换人格"
       >
-        <span className="personality-trigger-emoji">{currentPersona.emoji}</span>
+        <span className="personality-trigger-icon">
+          <Icon name={currentPersona.icon} size={18} />
+        </span>
       </button>
 
       {open && (
@@ -90,24 +92,29 @@ export default function PersonalityPicker({ onSend }: Props) {
             {PERSONALITIES.map((p) => (
               <button
                 key={p.id}
-                className={`personality-card${p.id === current ? " active" : ""}`}
+                className={`personality-card personality-card-${p.id}${p.id === current ? " active" : ""}`}
                 onClick={() => select(p.id)}
               >
-                <div className="personality-card-emoji">{p.emoji}</div>
-                <div className="personality-card-name ui-font">{p.name}</div>
-                <div className="personality-card-desc">{p.description}</div>
+                <span className="personality-card-icon" aria-hidden="true">
+                  <Icon name={p.icon} size={18} />
+                </span>
+                <span className="personality-card-copy">
+                  <span className="personality-card-name ui-font">{p.name}</span>
+                  <span className="personality-card-desc">{p.description}</span>
+                </span>
+                {p.id === current && <Icon name="check" size={14} className="personality-card-check" />}
               </button>
             ))}
           </div>
           <div className="personality-popover-hint">
-            选择后向 Agent 发送 <code>/personality {currentPersona.id}</code>
+            当前 <span>{currentPersona.name}</span>
           </div>
         </div>
       )}
 
       {!isDefault && (
         <div className="personality-current-tag ui-font">
-          <span className="personality-current-emoji">{currentPersona.emoji}</span>
+          <Icon name={currentPersona.icon} size={12} />
           <span className="personality-current-name">{currentPersona.name}</span>
           <button
             className="personality-current-clear"
