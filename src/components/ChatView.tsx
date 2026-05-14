@@ -3,6 +3,7 @@ import { Message } from "../types";
 import Icon from "./Icon";
 import GuideBot from "./chat/GuideBot";
 import MessageBubble from "./chat/MessageBubble";
+import GoalBar from "./chat/GoalBar";
 
 interface Props {
   messages: Message[];
@@ -105,6 +106,7 @@ export default function ChatView({
 
   return (
     <div className="main-area">
+      <GoalBar streaming={streaming} onSend={onSend} />
       {/* Messages */}
       {messages.length === 0 ? (
         <div className="chat-messages">
