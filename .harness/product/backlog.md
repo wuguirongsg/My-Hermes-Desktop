@@ -68,5 +68,7 @@
 
 （格式：`[YYYY-MM-DD] 描述 — 原因`）
 
+[2026-05-15] ACP gateway 方案回滚到 master — 实现后会话/对话出现多处问题。根因：dispatcher 把 notification 流与 response 混在同一 channel，用合成事件 `__prompt_done__` 做哨兵，导致 session/new response 提前触发循环退出；同时 get_session_history 未迁移到 ACP 路径，切历史对话状态错乱。干净的重做方案：notification 流与 response future 分离，不注入合成信号。当前决定搁置 Phase 2 ACP 迁移，继续 one-shot 进程模型。feat-111 /steer 依赖 ACP 长连接，暂时跟随搁置。
+
 - [2026-05-13] `hermes chat -q <slash>` 不会经过交互式 CLI 的 slash command handler，`/undo`、`/title` 等会被当作普通消息发给模型 — 一次性进程模式绕过了交互式 CLI 前端循环
 - [2026-05-14] 上述约束派生准则：**前端虚构的 slash 命令（/personality、/goal 等 hermes CLI 不存在的命令）发给模型时行为不稳定** — 模型可能照做也可能回答"没这个命令"。处理方式：feat-107 已改用自然语言提示词；其它 `/goal`、`/snapshot` 等若发现失效，按同样思路（前端状态 + 自然语言指令）改造，不要依赖 slash 字面被模型识别
