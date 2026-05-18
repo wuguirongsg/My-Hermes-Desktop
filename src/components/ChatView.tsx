@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, KeyboardEvent, ClipboardEvent, DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, KeyboardEvent, ClipboardEvent, DragEvent } from "react";
 import { Message } from "../types";
 import Icon from "./Icon";
 import GuideBot from "./chat/GuideBot";
@@ -34,6 +34,23 @@ interface Props {
 }
 
 const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"];
+
+const DAILY_PROMPTS = [
+  "今天深圳的天气怎么样？适合出门吗？",
+  "今天有哪些值得关注的国内外新闻？",
+  "今天全球主要股市的表现如何？",
+  "今天人民币兑美元的汇率是多少？",
+  "最近黄金价格走势如何？",
+  "最近有什么重要的科技或 AI 新进展？",
+  "给我讲一个今天历史上发生的大事",
+  "给我一个有趣的冷知识",
+  "推荐一部最近口碑好的电影或剧集",
+  "推荐几本近期值得读的好书",
+  "给我写一首关于今天的短诗",
+  "今天适合做什么类型的运动？",
+  "给我一个快速健康的午餐食谱建议",
+  "用一句话解释一个你觉得有趣的科学概念",
+];
 
 function readFileAsDataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -275,6 +292,11 @@ export default function ChatView({
     setIsTyping(text.length > 0);
   };
 
+  const dailyPrompt = useMemo(
+    () => DAILY_PROMPTS[Math.floor(Math.random() * DAILY_PROMPTS.length)],
+    []
+  );
+
   const STARTER_PROMPTS = [
     {
       icon: "terminal" as const,
@@ -293,8 +315,8 @@ export default function ChatView({
     },
     {
       icon: "message" as const,
-      title: "随便问问",
-      text: "",
+      title: dailyPrompt,
+      text: dailyPrompt,
     },
   ];
 
