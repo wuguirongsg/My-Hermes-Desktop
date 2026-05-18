@@ -35,7 +35,7 @@ export default function TerminalPanel({ ptyId, sessionId, onClose }: Props) {
       cursorBlink: true,
       fontFamily: '"JetBrains Mono", "Fira Code", monospace',
       fontSize: 13,
-      lineHeight: 1.3,
+      lineHeight: 1.0,
       theme: {
         background: "#0d1117",
         foreground: "#e6edf3",
