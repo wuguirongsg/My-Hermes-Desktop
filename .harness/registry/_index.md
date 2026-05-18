@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-18 00:03] DONE 空状态 Starter Prompts + 全消息复制按钮 — 空对话区新增 4 个场景卡片（写脚本/解释报错/分析代码/随便问问），点击填入输入框；所有 assistant 消息 hover 均显示复制按钮，重试按钮仍只在最后一条
+
 [2026-05-18 00:02] DESIGN ICO 框架产品评审 — 三大高价值低成本改动：空状态 Starter Prompts、代码块复制按钮（纯前端可立即做）；最大 Agentic 缺口：复杂任务执行前缺"揭示计划"确认流；feat-108 Tier 2 进度缺步骤时间线；隐式上下文可见性缺失
 
 [2026-05-18 00:01] SETUP ai-interface-design skill 安装 — skills/ai-interface-design.SKILL.md → ~/.claude/skills/ai-interface-design/SKILL.md，重启后即可用 /ai-interface-design
