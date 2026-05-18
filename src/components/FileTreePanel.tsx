@@ -332,10 +332,11 @@ function TreeRow({
             title={isExpanded ? "折叠" : "展开"}
             style={{
               ...iconBtn,
-              fontSize: "10px",
+              fontSize: "11px",
               width: "16px",
               flexShrink: 0,
-              opacity: 0.6,
+              opacity: 1,
+              color: isExpanded ? "var(--accent, #c07a5a)" : "var(--text-primary, #ccc)",
             }}
           >
             {loading ? "⟳" : isExpanded ? "▾" : "▸"}
