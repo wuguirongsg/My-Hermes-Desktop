@@ -37,19 +37,29 @@ const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/we
 
 const DAILY_PROMPTS = [
   "今天深圳的天气怎么样？适合出门吗？",
+  "最近一周上海的天气预报是什么？",
+  "今天北京的空气质量如何？",
   "今天有哪些值得关注的国内外新闻？",
+  "最近有什么重要的科技或 AI 新进展？",
+  "今天体育圈有什么大事发生？",
+  "最近国际上有哪些重要的外交动态？",
   "今天全球主要股市的表现如何？",
   "今天人民币兑美元的汇率是多少？",
-  "最近黄金价格走势如何？",
-  "最近有什么重要的科技或 AI 新进展？",
-  "给我讲一个今天历史上发生的大事",
+  "最近黄金和原油价格走势如何？",
+  "比特币今天的价格是多少？",
+  "今天历史上发生了哪些大事？",
   "给我一个有趣的冷知识",
+  "用简单的话解释一个有趣的科学概念",
+  "最近有哪些值得读的新书推荐？",
+  "给我推荐一个提高效率的小技巧",
   "推荐一部最近口碑好的电影或剧集",
-  "推荐几本近期值得读的好书",
+  "推荐一首适合现在心情的歌",
   "给我写一首关于今天的短诗",
+  "推荐一个值得关注的播客或 YouTube 频道",
   "今天适合做什么类型的运动？",
   "给我一个快速健康的午餐食谱建议",
-  "用一句话解释一个你觉得有趣的科学概念",
+  "分享一个改善睡眠质量的小建议",
+  "给我一个今天可以做到的微小习惯改变",
 ];
 
 function readFileAsDataURL(file: File): Promise<string> {
@@ -292,8 +302,8 @@ export default function ChatView({
     setIsTyping(text.length > 0);
   };
 
-  const dailyPrompt = useMemo(
-    () => DAILY_PROMPTS[Math.floor(Math.random() * DAILY_PROMPTS.length)],
+  const dailyPrompts = useMemo(
+    () => [...DAILY_PROMPTS].sort(() => Math.random() - 0.5).slice(0, 4),
     []
   );
 
@@ -312,11 +322,6 @@ export default function ChatView({
       icon: "code" as const,
       title: "分析代码",
       text: "分析当前项目的代码结构，给我一个简洁的概览，说明各主要模块的职责",
-    },
-    {
-      icon: "message" as const,
-      title: dailyPrompt,
-      text: dailyPrompt,
     },
   ];
 
@@ -346,12 +351,26 @@ export default function ChatView({
                 <button
                   key={p.title}
                   className="starter-prompt-card ui-font"
-                  onClick={() => p.text ? fillInput(p.text) : focusInput()}
+                  onClick={() => fillInput(p.text)}
                 >
                   <Icon name={p.icon} size={15} className="starter-prompt-icon" />
                   <span>{p.title}</span>
                 </button>
               ))}
+            </div>
+            <div className="daily-prompts-section">
+              <span className="daily-prompts-label ui-font">今日一问</span>
+              <div className="daily-prompts-grid">
+                {dailyPrompts.map((q) => (
+                  <button
+                    key={q}
+                    className="daily-prompt-card ui-font"
+                    onClick={() => fillInput(q)}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>

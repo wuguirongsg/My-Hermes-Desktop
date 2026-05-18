@@ -1275,6 +1275,46 @@ body {
   flex-shrink: 0;
 }
 
+.daily-prompts-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  width: 100%;
+  max-width: 480px;
+}
+.daily-prompts-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+.daily-prompts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+.daily-prompt-card {
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: var(--surface-card);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.daily-prompt-card:hover {
+  color: var(--body);
+  border-color: var(--primary-disabled);
+  background: var(--surface-cream-strong);
+}
+
 /* ── Message Bubbles ── */
 .message-group { display: flex; flex-direction: column; gap: 4px; }
 
