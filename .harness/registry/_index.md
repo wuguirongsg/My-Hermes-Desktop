@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-18 02:00] PLAN 录入 feat-211～213 — 隐式上下文 info 条 / 后台任务步骤时间线 / Grounding 气泡；Agent 计划确认流因依赖模型行为暂不录入，待评估
+
 [2026-05-18 01:30] DONE feat-209 工作目录切换 — WorkingDirBar 组件：basename 展示 + 原生 Folder Picker + cwd 传入 hermes 进程 + localStorage 持久化；tauri-plugin-dialog 新增
 
 [2026-05-18 01:00] DISCUSS 工作目录管理功能分析 — 建议做：工作目录切换（Folder Picker）+ 只读文件树侧边栏；不做文件编辑器（与 AI 定位冲突）；录入 feat-209、feat-210
