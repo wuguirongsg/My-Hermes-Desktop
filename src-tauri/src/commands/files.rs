@@ -117,14 +117,39 @@ pub async fn open_with_editor(path: String, editor: String) -> Result<(), String
 }
 
 #[tauri::command]
-pub async fn speak_text(text: String) -> Result<(), String> {
+pub async fn speak_text(
+    text: String,
+    state: tauri::State<'_, crate::AppState>,
+) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
+        // Kill any running say process first
+        if let Ok(mut guard) = state.say_process.lock() {
+            if let Some(mut child) = guard.take() {
+                child.kill().ok();
+            }
+        }
         let truncated: String = text.chars().take(500).collect();
-        std::process::Command::new("/usr/bin/say")
+        let child = std::process::Command::new("/usr/bin/say")
             .args(["-v", "Tingting", &truncated])
             .spawn()
             .map_err(|e| format!("say failed: {e}"))?;
+        if let Ok(mut guard) = state.say_process.lock() {
+            *guard = Some(child);
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn stop_speak(state: tauri::State<'_, crate::AppState>) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        if let Ok(mut guard) = state.say_process.lock() {
+            if let Some(mut child) = guard.take() {
+                child.kill().ok();
+            }
+        }
     }
     Ok(())
 }

@@ -197,6 +197,29 @@ function messageToMarkdown(message: Message): string {
   return message.rawOutput?.trim() ?? "";
 }
 
+function toSpokenText(markdown: string): string {
+  let text = markdown
+    .replace(/```[\s\S]*?```/g, "（代码块已省略）")
+    .replace(/`[^`\n]+`/g, (m) => m.slice(1, -1))
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*\n]+)\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/_([^_\n]+)_/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[-*+]\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/^[-*_]{3,}$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+  const words = text.split(/\s+/);
+  if (words.length > 150) {
+    text = words.slice(0, 150).join(" ") + "……内容已截断";
+  }
+  return text;
+}
+
 export default function MessageBubble({ message, isLastAssistant, streaming, onRetry }: Props) {
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -214,8 +237,14 @@ export default function MessageBubble({ message, isLastAssistant, streaming, onR
   };
 
   const speakMessage = async () => {
-    const text = messageToMarkdown(message);
-    if (!text || speaking) return;
+    if (speaking) {
+      try { await invoke("stop_speak"); } catch { /* ignore */ }
+      setSpeaking(false);
+      return;
+    }
+    const raw = messageToMarkdown(message);
+    if (!raw) return;
+    const text = toSpokenText(raw);
     setSpeaking(true);
     try {
       await invoke("speak_text", { text });
@@ -282,9 +311,13 @@ export default function MessageBubble({ message, isLastAssistant, streaming, onR
               </button>
             )}
             {showCopy && (
-              <button className="message-action-btn" onClick={speakMessage} title="朗读回复" disabled={speaking}>
+              <button
+                className={`message-action-btn${speaking ? " speaking" : ""}`}
+                onClick={speakMessage}
+                title={speaking ? "点击停止朗读" : "朗读回复"}
+              >
                 <Icon name="volume" size={12} />
-                {speaking ? "朗读中" : "朗读"}
+                {speaking ? "停止" : "朗读"}
               </button>
             )}
             {showCopy && (

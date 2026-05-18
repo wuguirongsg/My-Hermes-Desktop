@@ -52,6 +52,7 @@ pub struct AppState {
     pub background_tasks: Arc<
         Mutex<std::collections::HashMap<String, commands::background::BackgroundTask>>,
     >,
+    pub say_process: std::sync::Mutex<Option<std::process::Child>>,
 }
 
 impl AppState {
@@ -62,6 +63,7 @@ impl AppState {
             pty_children: std::sync::Mutex::new(std::collections::HashMap::new()),
             dashboard_child: std::sync::Mutex::new(None),
             background_tasks: Arc::new(Mutex::new(std::collections::HashMap::new())),
+            say_process: std::sync::Mutex::new(None),
         }
     }
 }
@@ -122,6 +124,7 @@ pub fn run() {
             commands::files::open_path,
             commands::files::open_with_editor,
             commands::files::speak_text,
+            commands::files::stop_speak,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
