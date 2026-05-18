@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-18 00:01] SETUP ai-interface-design skill 安装 — skills/ai-interface-design.SKILL.md → ~/.claude/skills/ai-interface-design/SKILL.md，重启后即可用 /ai-interface-design
+
 [2026-05-18 00:00] DESIGN 产品设计评审 — feat-207 斜杠命令信任危机（虚构命令需分类标注）；建议 feat-204 提前做（视觉冲击最强、无依赖）；feat-206 需先验证 dashboard 路由；feat-208 建议最小版（去掉树形 UI）；feat-201 首次关窗需一次性提示
 
 [2026-05-17 00:00] PLAN Phase 2 规划完成 — feat-201～206 录入 features.json；跨平台兼容约束写入 constraints.md；current-sprint.md 切换到 Phase 2
