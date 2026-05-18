@@ -97,6 +97,44 @@ pub fn hermes_home() -> Option<std::path::PathBuf> {
     dirs::home_dir().map(|h| h.join(".hermes"))
 }
 
+/// Resolve the hermes binary path.
+/// macOS .app bundles only get a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin),
+/// so we check known install locations first, then fall back to the login shell.
+pub fn hermes_binary() -> String {
+    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join(".hermes").join("bin").join("hermes"));
+        candidates.push(home.join(".local").join("bin").join("hermes"));
+        candidates.push(home.join("bin").join("hermes"));
+    }
+    candidates.push(std::path::PathBuf::from("/usr/local/bin/hermes"));
+    candidates.push(std::path::PathBuf::from("/opt/homebrew/bin/hermes"));
+    candidates.push(std::path::PathBuf::from("/usr/bin/hermes"));
+
+    for path in &candidates {
+        if path.exists() {
+            return path.to_string_lossy().to_string();
+        }
+    }
+
+    // Fallback: ask the login shell (slower, but handles any custom PATH)
+    for shell in &["/bin/zsh", "/bin/bash"] {
+        if let Ok(out) = std::process::Command::new(shell)
+            .args(["-l", "-c", "command -v hermes 2>/dev/null"])
+            .output()
+        {
+            if out.status.success() {
+                let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if !path.is_empty() {
+                    return path;
+                }
+            }
+        }
+    }
+
+    "hermes".to_string()
+}
+
 fn filename_stem(path: &std::path::Path) -> String {
     path.file_stem()
         .unwrap_or_default()
@@ -367,7 +405,7 @@ pub async fn rename_session(session_id: String, title: String) -> Result<(), Str
         return Err("Title cannot be empty".into());
     }
 
-    let out = Command::new("hermes")
+    let out = Command::new(hermes_binary())
         .args(["sessions", "rename", &session_id, clean_title])
         .output()
         .map_err(|e| format!("Failed to start hermes: {e}. Is hermes installed and in PATH?"))?;
@@ -392,7 +430,7 @@ pub async fn rename_session(session_id: String, title: String) -> Result<(), Str
 
 #[tauri::command]
 pub async fn get_session_history(session_id: String) -> Result<serde_json::Value, String> {
-    let out = Command::new("hermes")
+    let out = Command::new(hermes_binary())
         .args(["sessions", "export", "-", "--session-id", &session_id])
         .output();
 
@@ -475,7 +513,7 @@ pub async fn undo_last_turn(session_id: String) -> Result<(), String> {
 #[tauri::command]
 pub async fn delete_session(session_id: String) -> Result<(), String> {
     // Tell hermes to deregister the session from its internal state
-    let _ = Command::new("hermes")
+    let _ = Command::new(hermes_binary())
         .args(["sessions", "delete", "--yes", &session_id])
         .output();
 

@@ -55,7 +55,7 @@ fn configured_providers_from_env(env: &str) -> Vec<String> {
 }
 
 fn hermes_version() -> Result<String, String> {
-    let output = Command::new("hermes")
+    let output = Command::new(super::sessions::hermes_binary())
         .arg("version")
         .output()
         .map_err(|e| format!("Hermes CLI 未安装或不在 PATH 中：{e}"))?;

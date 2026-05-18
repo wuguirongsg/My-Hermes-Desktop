@@ -103,7 +103,7 @@ pub async fn bg_start(
     let stdout_file = File::create(&log_path).map_err(|e| format!("Cannot create log file: {e}"))?;
     let stderr_file = stdout_file.try_clone().map_err(|e| e.to_string())?;
 
-    let child = Command::new("hermes")
+    let child = Command::new(super::sessions::hermes_binary())
         .args(["chat", "-q", &prompt, "--source", "tool"])
         .env("PYTHONUNBUFFERED", "1")
         .stdout(Stdio::from(stdout_file))

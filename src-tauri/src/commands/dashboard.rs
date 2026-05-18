@@ -24,7 +24,7 @@ pub async fn dashboard_start(state: State<'_, AppState>) -> Result<String, Strin
     }
 
     // Spawn hermes dashboard --no-open --port 9119
-    let child = Command::new("hermes")
+    let child = Command::new(super::sessions::hermes_binary())
         .args(["dashboard", "--no-open", "--port", &DASHBOARD_PORT.to_string()])
         .stdout(Stdio::null())
         .stderr(Stdio::piped())

@@ -100,7 +100,7 @@ pub async fn send_message(
     // Use pipe (not PTY) so hermes detects non-TTY stdout and runs in line-buffered
     // non-interactive mode. PTY would put hermes into TUI mode where it uses ANSI
     // redraws + \r in place of \n, which BufReader::lines() cannot consume.
-    let mut cmd = Command::new("hermes");
+    let mut cmd = Command::new(super::sessions::hermes_binary());
     cmd.args(&args)
         .env("PYTHONUNBUFFERED", "1")
         .stdout(Stdio::piped())
@@ -399,7 +399,7 @@ pub async fn get_hermes_model_config() -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 pub async fn get_hermes_info() -> Result<serde_json::Value, String> {
-    let version_out = Command::new("hermes")
+    let version_out = Command::new(super::sessions::hermes_binary())
         .args(["version"])
         .output()
         .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
