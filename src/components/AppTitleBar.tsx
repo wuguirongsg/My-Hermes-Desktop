@@ -24,13 +24,14 @@ function pageLabel(path: string) {
   }
 }
 
-async function withCurrentWindow(action: "minimize" | "toggleMaximize" | "close") {
+async function withCurrentWindow(action: "minimize" | "toggleMaximize" | "close" | "startDragging") {
   try {
     const { getCurrentWindow } = await import("@tauri-apps/api/window");
     const appWindow = getCurrentWindow();
     if (action === "minimize") await appWindow.minimize();
     if (action === "toggleMaximize") await appWindow.toggleMaximize();
     if (action === "close") await appWindow.close();
+    if (action === "startDragging") await appWindow.startDragging();
   } catch (error) {
     console.warn(`Window control failed: ${action}`, error);
   }
@@ -57,8 +58,14 @@ export default function AppTitleBar({ platform, currentPath, onAction }: Props) 
     onAction(action);
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as Element;
+    if (target.closest("button, input, a, [role='button']")) return;
+    void withCurrentWindow("startDragging");
+  };
+
   return (
-    <div ref={rootRef} className={`app-titlebar app-titlebar-${platform}`}>
+    <div ref={rootRef} className={`app-titlebar app-titlebar-${platform}`} onMouseDown={handleMouseDown}>
       <div className="app-titlebar-left">
         <div className="app-titlebar-brand" title="Hermes Desktop">
           <span className="brand-mark app-titlebar-mark" aria-hidden="true">
