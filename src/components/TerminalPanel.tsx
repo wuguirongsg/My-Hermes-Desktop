@@ -6,6 +6,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import "@xterm/xterm/css/xterm.css";
 import Icon from "./Icon";
+import { useTerminalBg, xtermBackground } from "../hooks/useTerminalBg";
 
 interface Props {
   ptyId: string;
@@ -19,6 +20,9 @@ export default function TerminalPanel({ ptyId, sessionId, onClose }: Props) {
   const fitAddonRef = useRef<FitAddon | null>(null);
   const sizeRef = useRef<{ rows: number; cols: number } | null>(null);
   const unlistenRef = useRef<(() => void) | null>(null);
+  const { terminalBg } = useTerminalBg();
+  const terminalBgRef = useRef(terminalBg);
+  terminalBgRef.current = terminalBg;
 
   const doClose = useCallback(() => {
     invoke("pty_close", { ptyId }).catch(() => {});
@@ -33,11 +37,12 @@ export default function TerminalPanel({ ptyId, sessionId, onClose }: Props) {
 
     const term = new Terminal({
       cursorBlink: true,
+      allowTransparency: true,
       fontFamily: '"JetBrains Mono", "Fira Code", monospace',
       fontSize: 13,
       lineHeight: 1.0,
       theme: {
-        background: "#0d1117",
+        background: xtermBackground(terminalBgRef.current),
         foreground: "#e6edf3",
         cursor: "#58a6ff",
         selectionBackground: "#264f78",
@@ -106,8 +111,14 @@ export default function TerminalPanel({ ptyId, sessionId, onClose }: Props) {
     };
   }, [sessionId]);
 
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    term.options.theme = { ...term.options.theme, background: xtermBackground(terminalBg) };
+  }, [terminalBg]);
+
   return (
-    <div className="terminal-panel">
+    <div className="terminal-panel" data-terminal-bg={terminalBg}>
       <div className="terminal-panel-header">
         <span className="terminal-panel-title">
           <Icon name="terminal" size={14} />

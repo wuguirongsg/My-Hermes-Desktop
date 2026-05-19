@@ -6,6 +6,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import "@xterm/xterm/css/xterm.css";
 import Icon from "./Icon";
+import { useTerminalBg, xtermBackground } from "../hooks/useTerminalBg";
 
 interface Props {
   sessionId: string | null;
@@ -18,6 +19,9 @@ export default function TerminalModal({ sessionId, onClose }: Props) {
   const fitAddonRef = useRef<FitAddon | null>(null);
   const ptyId = useRef(`pty-${Date.now()}`);
   const unlistenRef = useRef<(() => void) | null>(null);
+  const { terminalBg } = useTerminalBg();
+  const terminalBgRef = useRef(terminalBg);
+  terminalBgRef.current = terminalBg;
 
   const handleClose = useCallback(() => {
     invoke("pty_close", { ptyId: ptyId.current }).catch(() => {});
@@ -29,11 +33,12 @@ export default function TerminalModal({ sessionId, onClose }: Props) {
 
     const term = new Terminal({
       cursorBlink: true,
+      allowTransparency: true,
       fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
       fontSize: 13,
-      lineHeight: 1.3,
+      lineHeight: 1.0,
       theme: {
-        background: "#0d1117",
+        background: xtermBackground(terminalBgRef.current),
         foreground: "#e6edf3",
         cursor: "#58a6ff",
         selectionBackground: "#264f78",
@@ -103,6 +108,12 @@ export default function TerminalModal({ sessionId, onClose }: Props) {
     };
   }, [sessionId]);
 
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    term.options.theme = { ...term.options.theme, background: xtermBackground(terminalBg) };
+  }, [terminalBg]);
+
   // Keyboard shortcut: Escape to close
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -116,6 +127,7 @@ export default function TerminalModal({ sessionId, onClose }: Props) {
     <div className="terminal-overlay" onClick={handleClose}>
       <div
         className="terminal-modal"
+        data-terminal-bg={terminalBg}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="terminal-modal-header">

@@ -7,7 +7,10 @@ import MemoryPage from "./pages/MemoryPage";
 import DashboardPage from "./pages/DashboardPage";
 import OnboardingPage, { type HermesSetupStatus } from "./pages/OnboardingPage";
 import SettingsPage from "./pages/SettingsPage";
+import KeyboardShortcutsPanel from "./components/KeyboardShortcutsPanel";
 import { useTheme } from "./hooks/useTheme";
+
+const isMac = navigator.platform.toLowerCase().includes("mac");
 
 function setupErrorMessage(error: unknown) {
   const message = String(error);
@@ -29,6 +32,7 @@ function AppShell() {
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [setup, setSetup] = useState<HermesSetupStatus | null>(null);
   const [ready, setReady] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const checkSetup = useCallback(async () => {
     setCheckingSetup(true);
@@ -61,6 +65,26 @@ function AppShell() {
     checkSetup();
   }, [checkSetup]);
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+      if (modKey && e.key === "/") {
+        e.preventDefault();
+        setShowShortcuts((v) => !v);
+      }
+      if (modKey && e.key === "n") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("new-session-hotkey"));
+      }
+      if (modKey && e.key === "w") {
+        e.preventDefault();
+        setShowShortcuts(false);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   if (checkingSetup && !setup && !ready) {
     return (
       <div className="setup-loading">
@@ -77,9 +101,10 @@ function AppShell() {
   return (
     <div className="app-shell">
       <NavBar />
+      {showShortcuts && <KeyboardShortcutsPanel onClose={() => setShowShortcuts(false)} />}
       <div className="page-area">
         <div className="chat-page-host" style={{ display: isChat ? "block" : "none" }}>
-          <ChatPage />
+          <ChatPage apiKeyConfigured={setup?.api_key_configured ?? true} />
         </div>
         {!isChat && (
           <Routes>

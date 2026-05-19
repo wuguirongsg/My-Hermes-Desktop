@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Session, Message, StreamChunk, HermesStatus } from "../types";
@@ -97,7 +98,9 @@ function parseStatusLine(line: string): Partial<HermesStatus> | null {
 
 // ─── ChatPage ─────────────────────────────────────────────────────────────────
 
-export default function ChatPage() {
+export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured?: boolean }) {
+  const navigate = useNavigate();
+
   // Global app state
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -162,6 +165,12 @@ export default function ChatPage() {
     loadHermesInfo();
   }, []);
 
+  // 同步 streaming 状态到系统托盘图标
+  useEffect(() => {
+    const status = streamingSessions.size > 0 ? "running" : "idle";
+    invoke("update_tray_status", { status }).catch(() => {});
+  }, [streamingSessions]);
+
   // Auto-refresh sessions after any streaming session finishes
   useEffect(() => {
     const prev = prevStreamingRef.current;
@@ -224,6 +233,36 @@ export default function ChatPage() {
       return next;
     });
   }, [activeSessionId]);
+
+  // 监听托盘"新建会话"菜单项 + 全局快捷键 Cmd+N（必须在 handleNewSession 定义之后）
+  useEffect(() => {
+    const unlisten = listen("new-session-from-tray", () => {
+      handleNewSession();
+    });
+    const hotkeyHandler = () => handleNewSession();
+    window.addEventListener("new-session-hotkey", hotkeyHandler);
+    return () => {
+      unlisten.then((fn) => fn());
+      window.removeEventListener("new-session-hotkey", hotkeyHandler);
+    };
+  }, [handleNewSession]);
+
+  // 后台任务完成通知 → 刷新会话列表并跳转
+  useEffect(() => {
+    const unlisten = listen<{ task_id: string; session_id: string | null; status: string }>(
+      "bg-task-done",
+      async ({ payload }) => {
+        await loadSessions();
+        if (payload.session_id) {
+          setActiveSessionId(payload.session_id);
+        } else {
+          setSnapshotPanelTab("background");
+          setSnapshotPanelOpen(true);
+        }
+      }
+    );
+    return () => { unlisten.then((fn) => fn()); };
+  }, [loadSessions]);
 
   const handleDeleteSession = useCallback(
     async (id: string) => {
@@ -950,6 +989,18 @@ export default function ChatPage() {
             onBgCountChange={setBgRunningCount}
           />
         )}
+        {!apiKeyConfigured && (
+          <div className="config-guide-card">
+            <span className="config-guide-icon">⚠</span>
+            <div className="config-guide-body">
+              <div className="config-guide-title">尚未配置 API Key</div>
+              <div className="config-guide-desc">Hermes 需要至少一个 Provider 的 API Key 才能运行。</div>
+            </div>
+            <button className="config-guide-btn" onClick={() => navigate("/dashboard")}>
+              去配置
+            </button>
+          </div>
+        )}
         <ChatView
           messages={messages}
           streaming={streaming}
@@ -995,6 +1046,7 @@ export default function ChatPage() {
           onRetryLastMessage={handleRetryLastMessage}
           onStop={handleStopSession}
           error={error}
+          onGoToDashboard={() => navigate("/dashboard")}
           hasSession={activeSessionId !== null || messages.length > 0}
           onRunBackground={handleRunBackground}
           bgRunningCount={bgRunningCount}

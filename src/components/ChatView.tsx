@@ -33,6 +33,7 @@ interface Props {
   bgRunningCount?: number;
   onPtyWrite?: (data: string) => void;
   pendingInputAppend?: { id: number; text: string } | null;
+  onGoToDashboard?: () => void;
 }
 
 const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"];
@@ -103,8 +104,24 @@ export default function ChatView({
   bgRunningCount = 0,
   onPtyWrite,
   pendingInputAppend,
+  onGoToDashboard,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 识别 hermes 错误类型，返回结构化描述；无法识别则返回 null
+  function parseErrorCard(msg: string | null): { title: string; desc: string; dashboard?: string } | null {
+    if (!msg) return null;
+    const m = msg.toLowerCase();
+    if (m.includes("401") || m.includes("unauthorized") || m.includes("invalid api key") || m.includes("authentication"))
+      return { title: "API Key 无效或未配置", desc: "请前往 Dashboard 检查或重新填写 API Key。", dashboard: "dashboard" };
+    if (m.includes("429") || m.includes("rate limit") || m.includes("too many requests"))
+      return { title: "请求频率超限", desc: "API 调用次数已达上限，请稍后重试或升级套餐。", dashboard: "dashboard" };
+    if (m.includes("model not found") || m.includes("invalid model") || m.includes("does not exist"))
+      return { title: "模型不存在", desc: "当前选择的模型无法访问，请在 Dashboard 更换模型配置。", dashboard: "dashboard" };
+    if (m.includes("mcp") || m.includes("tool error") || m.includes("tool call"))
+      return { title: "MCP 工具调用失败", desc: "本次调用的 MCP 工具发生错误，可在 Dashboard 检查 MCP 配置。", dashboard: "dashboard" };
+    return null;
+  }
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // isTyping: user is actively typing in the textarea
@@ -455,23 +472,55 @@ export default function ChatView({
               onRetry={onRetryLastMessage}
             />
           ))}
-          {error && (
-            <div className="error-banner fade-in">
-              <Icon name="alert" size={15} />
-              <span>{error}</span>
-            </div>
-          )}
+          {error && (() => {
+            const card = parseErrorCard(error);
+            return card ? (
+              <div className="error-card fade-in">
+                <div className="error-card-header">
+                  <Icon name="alert" size={14} />
+                  <span>{card.title}</span>
+                </div>
+                <div className="error-card-desc">{card.desc}</div>
+                {card.dashboard && onGoToDashboard && (
+                  <button className="error-card-btn" onClick={onGoToDashboard}>
+                    前往 Dashboard →
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="error-banner fade-in">
+                <Icon name="alert" size={15} />
+                <span>{error}</span>
+              </div>
+            );
+          })()}
           <div ref={messagesEndRef} />
         </div>
       )}
 
       {/* Error (when no messages) */}
-      {error && messages.length === 0 && (
-        <div className="error-banner" style={{ margin: "8px 16px" }}>
-          <Icon name="alert" size={15} />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && messages.length === 0 && (() => {
+        const card = parseErrorCard(error);
+        return card ? (
+          <div className="error-card" style={{ margin: "8px 16px" }}>
+            <div className="error-card-header">
+              <Icon name="alert" size={14} />
+              <span>{card.title}</span>
+            </div>
+            <div className="error-card-desc">{card.desc}</div>
+            {card.dashboard && onGoToDashboard && (
+              <button className="error-card-btn" onClick={onGoToDashboard}>
+                前往 Dashboard →
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="error-banner" style={{ margin: "8px 16px" }}>
+            <Icon name="alert" size={15} />
+            <span>{error}</span>
+          </div>
+        );
+      })()}
 
       {/* Input */}
       <div

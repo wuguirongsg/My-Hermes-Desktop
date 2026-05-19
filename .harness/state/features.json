@@ -2,7 +2,7 @@
   "_readme": "只允许把 passes 从 false 改成 true。禁止删除条目或修改 description。违反视为严重错误。",
   "_project": "hermes-desktop",
   "_sprint": "Phase 2 — macOS 原生感",
-  "_updated": "2026-05-18",
+  "_updated": "2026-05-19",
   "features": [
     {
       "id": "feat-000",
@@ -136,7 +136,7 @@
       "description": "菜单栏托盘集成 — 系统托盘常驻图标，状态色反映 idle/running/error；右键菜单含打开/新会话/退出；关闭主窗口隐藏到托盘不退出进程。跨平台：tauri-plugin-tray-icon 三平台支持，图标资源按平台适配",
       "acceptance": "应用启动后托盘图标出现；running 时图标变色/脉冲；右键菜单三项可用；关闭窗口后进程仍在托盘；托盘「退出」才真正退出",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-202",
@@ -145,7 +145,7 @@
       "depends_on": [
         "feat-201"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-203",
@@ -154,7 +154,7 @@
       "depends_on": [
         "feat-108"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-204",
@@ -168,14 +168,14 @@
       "description": "快捷键面板 — Cmd+/（macOS）/ Ctrl+/（Win/Linux）调出快捷键速查面板；列出所有可用快捷键，符号适配平台（⌘ vs Ctrl）；Esc 关闭；Cmd+N 新会话 / Cmd+W 关闭面板",
       "acceptance": "按快捷键弹出速查面板；面板显示所有快捷键及说明；macOS 显示 ⌘ 符号，其他平台显示 Ctrl；Esc 正常关闭",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-206",
       "description": "配置引导卡片 — 启动时读 config 文件检测 API Key，未配置则对话区顶部显示常驻卡片；hermes 进程报错时 Rust 层拦截错误类型（api key/model/rate limit/mcp），在对话流中插入说明卡片 + 跳转 dashboard 对应页面按钮；config 路径用 dirs crate 跨平台",
       "acceptance": "无 API Key 时启动即出现引导卡片；hermes 返回 401/model not found/rate limit 错误时对话流中出现对应说明卡片；卡片按钮可跳转到 dashboard 对应页面；API Key 配置后卡片消失",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-209",

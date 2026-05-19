@@ -2626,11 +2626,15 @@ body {
   .bot-appearance-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .terminal-bg-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 780px) {
   .theme-card-grid,
-  .bot-appearance-grid {
+  .bot-appearance-grid,
+  .terminal-bg-grid {
     grid-template-columns: 1fr;
   }
 
@@ -3187,6 +3191,135 @@ body {
   padding: 4px 8px 8px;
 }
 
+/* ── Terminal Background Variants ── */
+/* glass：面板框用深色，body 挂鲜艳渐变作底色，xterm 画 52% 暗膜叠上去 */
+.terminal-panel[data-terminal-bg="glass"] {
+  background: #0b1020;
+}
+.terminal-panel[data-terminal-bg="glass"] .terminal-panel-header {
+  background: rgba(11, 16, 32, 0.9);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+.terminal-panel[data-terminal-bg="glass"] .terminal-panel-body {
+  background: linear-gradient(150deg, #0d2060 0%, #1a0850 40%, #0a1840 70%, #0d2840 100%);
+}
+
+.terminal-panel[data-terminal-bg="ocean"] {
+  background: linear-gradient(150deg, #060c1f 0%, #0e1a45 55%, #130a32 100%);
+}
+.terminal-panel[data-terminal-bg="ocean"] .terminal-panel-header {
+  background: rgba(6, 10, 26, 0.85);
+}
+.terminal-panel[data-terminal-bg="ocean"] .terminal-panel-body {
+  background: linear-gradient(150deg, #060c1f 0%, #0e1a45 55%, #130a32 100%);
+}
+
+.terminal-panel[data-terminal-bg="sunset"] {
+  background: linear-gradient(150deg, #160808 0%, #2e0c1c 55%, #170830 100%);
+}
+.terminal-panel[data-terminal-bg="sunset"] .terminal-panel-header {
+  background: rgba(18, 6, 8, 0.85);
+}
+.terminal-panel[data-terminal-bg="sunset"] .terminal-panel-body {
+  background: linear-gradient(150deg, #160808 0%, #2e0c1c 55%, #170830 100%);
+}
+
+.terminal-panel[data-terminal-bg="forest"] {
+  background: linear-gradient(150deg, #041209 0%, #0b2818 55%, #051c10 100%);
+}
+.terminal-panel[data-terminal-bg="forest"] .terminal-panel-header {
+  background: rgba(4, 12, 7, 0.85);
+}
+.terminal-panel[data-terminal-bg="forest"] .terminal-panel-body {
+  background: linear-gradient(150deg, #041209 0%, #0b2818 55%, #051c10 100%);
+}
+
+/* TerminalModal background variants */
+.terminal-modal[data-terminal-bg="glass"] {
+  background: rgba(10, 14, 24, 0.72);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+}
+.terminal-modal[data-terminal-bg="ocean"] {
+  background: linear-gradient(150deg, #060c1f 0%, #0e1a45 55%, #130a32 100%);
+}
+.terminal-modal[data-terminal-bg="sunset"] {
+  background: linear-gradient(150deg, #160808 0%, #2e0c1c 55%, #170830 100%);
+}
+.terminal-modal[data-terminal-bg="forest"] {
+  background: linear-gradient(150deg, #041209 0%, #0b2818 55%, #051c10 100%);
+}
+
+/* ── Terminal BG Setting Cards ── */
+.terminal-bg-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.terminal-bg-card {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  color: var(--body);
+  cursor: pointer;
+  text-align: left;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  min-height: 72px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.terminal-bg-card:hover {
+  border-color: var(--primary-disabled);
+  background: var(--surface-card);
+}
+
+.terminal-bg-card.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.terminal-bg-swatch {
+  width: 44px;
+  height: 36px;
+  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: block;
+  flex-shrink: 0;
+}
+
+.terminal-bg-card-dark    .terminal-bg-swatch { background: #0d1117; }
+.terminal-bg-card-glass   .terminal-bg-swatch { background: rgba(10,14,24,0.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-color: rgba(255,255,255,0.15); }
+.terminal-bg-card-ocean   .terminal-bg-swatch { background: linear-gradient(135deg, #060c1f 0%, #0e1a45 55%, #130a32 100%); }
+.terminal-bg-card-sunset  .terminal-bg-swatch { background: linear-gradient(135deg, #160808 0%, #2e0c1c 55%, #170830 100%); }
+.terminal-bg-card-forest  .terminal-bg-swatch { background: linear-gradient(135deg, #041209 0%, #0b2818 55%, #051c10 100%); }
+
+.terminal-bg-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.terminal-bg-name {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.terminal-bg-desc {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.terminal-bg-card > .ui-icon { color: var(--primary); justify-self: end; }
+
 /* ── Context Bar ── */
 .context-bar-wrapper {
   position: relative;
@@ -3606,6 +3739,28 @@ body {
 .terminal-panel-body .xterm-viewport,
 .terminal-panel-body .xterm-screen {
   height: 100% !important;
+}
+
+/* xterm.js 通过 JS inline style 写入 viewport 背景色，用 !important 覆盖 */
+.terminal-panel[data-terminal-bg="glass"]  .xterm-viewport,
+.terminal-panel[data-terminal-bg="ocean"]  .xterm-viewport,
+.terminal-panel[data-terminal-bg="sunset"] .xterm-viewport,
+.terminal-panel[data-terminal-bg="forest"] .xterm-viewport {
+  background-color: transparent !important;
+}
+
+/* 把渐变/毛玻璃挂在 body 上（紧贴 canvas，能透出来） */
+.terminal-panel[data-terminal-bg="glass"] .terminal-panel-body {
+  background: rgba(10, 14, 24, 0.0);
+}
+.terminal-panel[data-terminal-bg="ocean"] .terminal-panel-body {
+  background: linear-gradient(150deg, #060c1f 0%, #0e1a45 55%, #130a32 100%);
+}
+.terminal-panel[data-terminal-bg="sunset"] .terminal-panel-body {
+  background: linear-gradient(150deg, #160808 0%, #2e0c1c 55%, #170830 100%);
+}
+.terminal-panel[data-terminal-bg="forest"] .terminal-panel-body {
+  background: linear-gradient(150deg, #041209 0%, #0b2818 55%, #051c10 100%);
 }
 
 /* ─── Right Slide Panel (Snapshot + Background) ─────────────────────────────── */
@@ -4437,4 +4592,202 @@ body {
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* ── Config Guide Card (API Key 未配置) ── */
+.config-guide-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 16px 2px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--warning) 10%, var(--canvas));
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+  border-radius: var(--radius);
+}
+
+.config-guide-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.config-guide-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.config-guide-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.config-guide-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+
+.config-guide-btn {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.config-guide-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ── Error Card (结构化错误 + Dashboard 跳转) ── */
+.error-card {
+  margin: 8px 16px;
+  padding: 10px 14px;
+  background: color-mix(in srgb, var(--error) 8%, var(--canvas));
+  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+  border-radius: var(--radius);
+}
+
+.error-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+}
+
+.error-card-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.error-card-btn {
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--error);
+  background: transparent;
+  color: var(--error);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.error-card-btn:hover {
+  background: var(--error);
+  color: #fff;
+}
+
+/* ── Keyboard Shortcuts Panel ── */
+.kbd-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fade-in 0.12s ease;
+}
+
+.kbd-panel {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  width: 380px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.kbd-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.kbd-panel-title {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.kbd-panel-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  line-height: 1;
+}
+.kbd-panel-close:hover { color: var(--ink); background: var(--surface-soft); }
+
+.kbd-panel-body {
+  padding: 8px 0 12px;
+  overflow-y: auto;
+}
+
+.kbd-section {
+  padding: 8px 16px 4px;
+}
+
+.kbd-section-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.kbd-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.kbd-row-label {
+  font-size: 13px;
+  color: var(--body);
+}
+
+.kbd-row-keys {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.kbd-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 6px;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
 }
