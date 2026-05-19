@@ -3737,6 +3737,28 @@ body {
   height: 100% !important;
 }
 
+/* xterm.js 通过 JS inline style 写入 viewport 背景色，用 !important 覆盖 */
+.terminal-panel[data-terminal-bg="glass"]  .xterm-viewport,
+.terminal-panel[data-terminal-bg="ocean"]  .xterm-viewport,
+.terminal-panel[data-terminal-bg="sunset"] .xterm-viewport,
+.terminal-panel[data-terminal-bg="forest"] .xterm-viewport {
+  background-color: transparent !important;
+}
+
+/* 把渐变/毛玻璃挂在 body 上（紧贴 canvas，能透出来） */
+.terminal-panel[data-terminal-bg="glass"] .terminal-panel-body {
+  background: rgba(10, 14, 24, 0.0);
+}
+.terminal-panel[data-terminal-bg="ocean"] .terminal-panel-body {
+  background: linear-gradient(150deg, #060c1f 0%, #0e1a45 55%, #130a32 100%);
+}
+.terminal-panel[data-terminal-bg="sunset"] .terminal-panel-body {
+  background: linear-gradient(150deg, #160808 0%, #2e0c1c 55%, #170830 100%);
+}
+.terminal-panel[data-terminal-bg="forest"] .terminal-panel-body {
+  background: linear-gradient(150deg, #041209 0%, #0b2818 55%, #051c10 100%);
+}
+
 /* ─── Right Slide Panel (Snapshot + Background) ─────────────────────────────── */
 .content-area { position: relative; }
 

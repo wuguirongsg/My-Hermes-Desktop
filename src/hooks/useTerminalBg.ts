@@ -7,7 +7,9 @@ export const TERMINAL_BGS: TerminalBg[] = ["dark", "glass", "ocean", "sunset", "
 const STORAGE_KEY = "hermes-terminal-bg";
 
 export function xtermBackground(bg: TerminalBg): string {
-  return bg === "dark" ? "#0d1117" : "transparent";
+  if (bg === "dark") return "#0d1117";
+  // xterm.js 不识别 "transparent" 关键字，必须用 rgba
+  return "rgba(0, 0, 0, 0)";
 }
 
 export function useTerminalBg() {
