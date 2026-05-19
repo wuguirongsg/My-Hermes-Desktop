@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use tauri::{Emitter, Manager};
 
 pub mod stream;
 pub mod commands;
@@ -70,6 +71,78 @@ impl AppState {
     }
 }
 
+// ─── Tray Setup ───────────────────────────────────────────────────────────────
+
+fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri::{
+        menu::{Menu, MenuItem, PredefinedMenuItem},
+        tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    };
+
+    let open = MenuItem::with_id(app, "open", "打开 Hermes Desktop", true, None::<&str>)?;
+    let new_session = MenuItem::with_id(app, "new_session", "新建会话", true, None::<&str>)?;
+    let sep = PredefinedMenuItem::separator(app)?;
+    let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+
+    let menu = Menu::with_items(app, &[&open, &new_session, &sep, &quit])?;
+
+    TrayIconBuilder::with_id("hermes-tray")
+        .icon(app.default_window_icon().unwrap().clone())
+        .tooltip("Hermes Desktop")
+        .menu(&menu)
+        // 左键单击切换窗口显示/隐藏
+        .show_menu_on_left_click(false)
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                let app = tray.app_handle();
+                if let Some(win) = app.get_webview_window("main") {
+                    if win.is_visible().unwrap_or(false) {
+                        win.hide().unwrap();
+                    } else {
+                        win.show().unwrap();
+                        win.set_focus().unwrap();
+                    }
+                }
+            }
+        })
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "open" => {
+                if let Some(win) = app.get_webview_window("main") {
+                    win.show().unwrap();
+                    win.set_focus().unwrap();
+                }
+            }
+            "new_session" => {
+                if let Some(win) = app.get_webview_window("main") {
+                    win.show().unwrap();
+                    win.set_focus().unwrap();
+                    let _ = win.emit("new-session-from-tray", ());
+                }
+            }
+            "quit" => {
+                // 退出前 kill 后台进程
+                let state = app.state::<AppState>();
+                if let Some(mut child) = state.dashboard_child.lock().unwrap().take() {
+                    child.kill().ok();
+                }
+                let mut procs = state.chat_processes.lock().unwrap();
+                for (_, mut child) in procs.drain() {
+                    child.kill().ok();
+                }
+                app.exit(0);
+            }
+            _ => {}
+        })
+        .build(app)?;
+
+    Ok(())
+}
+
 // ─── App Entry Point ──────────────────────────────────────────────────────────
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -79,17 +152,26 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(AppState::new())
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Destroyed = event {
-                let opt = tauri::Manager::state::<AppState>(window)
-                    .dashboard_child
-                    .lock()
-                    .unwrap()
-                    .take();
-                if let Some(mut child) = opt {
-                    child.kill().ok();
+        .setup(|app| {
+            setup_tray(app)?;
+            Ok(())
+        })
+        .on_window_event(|window, event| match event {
+            // 关闭按钮 → 隐藏到托盘，不退出进程
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                window.hide().unwrap();
+                api.prevent_close();
+            }
+            // 进程真正退出时（app.exit() 触发）kill dashboard
+            tauri::WindowEvent::Destroyed => {
+                let state = tauri::Manager::state::<AppState>(window);
+                let child = state.dashboard_child.lock().unwrap().take();
+                drop(state);
+                if let Some(mut c) = child {
+                    c.kill().ok();
                 }
             }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             commands::sessions::list_sessions,
@@ -129,6 +211,7 @@ pub fn run() {
             commands::files::open_with_editor,
             commands::files::speak_text,
             commands::files::stop_speak,
+            commands::tray::update_tray_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

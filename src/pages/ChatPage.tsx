@@ -162,6 +162,12 @@ export default function ChatPage() {
     loadHermesInfo();
   }, []);
 
+  // 同步 streaming 状态到系统托盘图标
+  useEffect(() => {
+    const status = streamingSessions.size > 0 ? "running" : "idle";
+    invoke("update_tray_status", { status }).catch(() => {});
+  }, [streamingSessions]);
+
   // Auto-refresh sessions after any streaming session finishes
   useEffect(() => {
     const prev = prevStreamingRef.current;
@@ -224,6 +230,14 @@ export default function ChatPage() {
       return next;
     });
   }, [activeSessionId]);
+
+  // 监听托盘"新建会话"菜单项（必须在 handleNewSession 定义之后）
+  useEffect(() => {
+    const unlisten = listen("new-session-from-tray", () => {
+      handleNewSession();
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [handleNewSession]);
 
   const handleDeleteSession = useCallback(
     async (id: string) => {
