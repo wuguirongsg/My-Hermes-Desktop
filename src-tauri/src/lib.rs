@@ -71,6 +71,33 @@ impl AppState {
     }
 }
 
+// ─── Shortcuts Setup ─────────────────────────────────────────────────────────
+
+fn setup_shortcuts(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+
+    #[cfg(target_os = "macos")]
+    let modifiers = Modifiers::SUPER | Modifiers::SHIFT;
+    #[cfg(not(target_os = "macos"))]
+    let modifiers = Modifiers::CONTROL | Modifiers::SHIFT;
+
+    let shortcut = Shortcut::new(Some(modifiers), Code::KeyH);
+    app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, event| {
+        if event.state() == ShortcutState::Pressed {
+            if let Some(win) = app.get_webview_window("main") {
+                if win.is_visible().unwrap_or(false) {
+                    win.hide().unwrap();
+                } else {
+                    win.show().unwrap();
+                    win.set_focus().unwrap();
+                }
+            }
+        }
+    })?;
+
+    Ok(())
+}
+
 // ─── Tray Setup ───────────────────────────────────────────────────────────────
 
 fn setup_tray(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
@@ -151,9 +178,12 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
         .manage(AppState::new())
         .setup(|app| {
             setup_tray(app)?;
+            setup_shortcuts(app)?;
             Ok(())
         })
         .on_window_event(|window, event| match event {

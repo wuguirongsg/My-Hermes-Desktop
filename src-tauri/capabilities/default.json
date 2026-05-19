@@ -15,6 +15,10 @@
     "fs:allow-read-text-file",
     "fs:allow-exists",
     "shell:allow-open",
-    "dialog:allow-open"
+    "dialog:allow-open",
+    "notification:default",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-is-registered"
   ]
 }

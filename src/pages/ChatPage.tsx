@@ -239,6 +239,23 @@ export default function ChatPage() {
     return () => { unlisten.then((fn) => fn()); };
   }, [handleNewSession]);
 
+  // 后台任务完成通知 → 刷新会话列表并跳转
+  useEffect(() => {
+    const unlisten = listen<{ task_id: string; session_id: string | null; status: string }>(
+      "bg-task-done",
+      async ({ payload }) => {
+        await loadSessions();
+        if (payload.session_id) {
+          setActiveSessionId(payload.session_id);
+        } else {
+          setSnapshotPanelTab("background");
+          setSnapshotPanelOpen(true);
+        }
+      }
+    );
+    return () => { unlisten.then((fn) => fn()); };
+  }, [loadSessions]);
+
   const handleDeleteSession = useCallback(
     async (id: string) => {
       try {

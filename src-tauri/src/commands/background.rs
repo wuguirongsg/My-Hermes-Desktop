@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use tauri::State;
+use tauri::{AppHandle, Emitter, State};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct BackgroundTask {
@@ -88,6 +88,7 @@ fn kill_pid(pid: u32) {
 
 #[tauri::command]
 pub async fn bg_start(
+    app: AppHandle,
     app_state: State<'_, AppState>,
     prompt: String,
 ) -> Result<String, String> {
@@ -133,30 +134,73 @@ pub async fn bg_start(
     let map_clone = app_state.background_tasks.clone();
     let task_id_clone = task_id.clone();
     let log_path_clone = log_path.clone();
+    let prompt_clone = prompt.clone();
+    let app_clone = app.clone();
+    let start_instant = std::time::Instant::now();
     std::thread::spawn(move || {
         let mut child = child;
         let exit_status = child.wait();
+        let elapsed_secs = start_instant.elapsed().as_secs();
         let now = chrono::Local::now().to_rfc3339();
         let session_id = std::fs::read_to_string(&log_path_clone)
             .ok()
             .and_then(|t| parse_session_id(&t));
-        let mut map = map_clone.lock().unwrap();
-        if let Some(t) = map.get_mut(&task_id_clone) {
-            t.finished_at = Some(now);
-            match exit_status {
-                Ok(es) => {
-                    t.exit_code = es.code();
-                    t.status = if es.success() {
-                        "done".into()
-                    } else {
-                        "failed".into()
-                    };
+
+        let final_status;
+        {
+            let mut map = map_clone.lock().unwrap();
+            if let Some(t) = map.get_mut(&task_id_clone) {
+                t.finished_at = Some(now);
+                match exit_status {
+                    Ok(es) => {
+                        t.exit_code = es.code();
+                        t.status = if es.success() {
+                            "done".into()
+                        } else {
+                            "failed".into()
+                        };
+                    }
+                    Err(_) => t.status = "failed".into(),
                 }
-                Err(_) => t.status = "failed".into(),
+                if t.session_id.is_none() {
+                    t.session_id = session_id.clone();
+                }
+                final_status = t.status.clone();
+            } else {
+                return;
             }
-            if t.session_id.is_none() {
-                t.session_id = session_id;
-            }
+        }
+
+        // 任务运行超过 30 秒时推送原生通知并通知前端导航
+        if elapsed_secs >= 30 {
+            let short_prompt = if prompt_clone.chars().count() > 40 {
+                let truncated: String = prompt_clone.chars().take(40).collect();
+                format!("{truncated}…")
+            } else {
+                prompt_clone.clone()
+            };
+            let title = if final_status == "done" {
+                "Hermes 后台任务完成"
+            } else {
+                "Hermes 后台任务失败"
+            };
+
+            use tauri_plugin_notification::NotificationExt;
+            let _ = app_clone
+                .notification()
+                .builder()
+                .title(title)
+                .body(&short_prompt)
+                .show();
+
+            let _ = app_clone.emit(
+                "bg-task-done",
+                serde_json::json!({
+                    "task_id": task_id_clone,
+                    "session_id": session_id,
+                    "status": final_status,
+                }),
+            );
         }
     });
 
