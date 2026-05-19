@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-19 16:20] FIX macOS 标题栏无法拖动 — .app-titlebar-left 默认 justify-self:stretch 撑满 1fr 列覆盖拖拽区；加 justify-self:start 使其只占内容宽度，空白区恢复为 drag 区域
+
 [2026-05-19 16:10] FIX macOS 双层标题栏 — tauri.conf.json 加 titleBarStyle:"overlay"+hiddenTitle:true；.app-titlebar-macos 加 padding-left:72px 避开红绿灯；Windows/Linux 不受影响
 
 [2026-05-19 13:00] FIX 毛玻璃半透明暗膜 — glass 模式 xterm 背景改 rgba(13,17,23,0.52)，body 挂蓝紫渐变底色；52% 暗膜叠渐变产生深度感；ocean/sunset/forest 渐变明确挂 body 层
