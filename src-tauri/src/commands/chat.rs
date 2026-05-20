@@ -93,6 +93,107 @@ pub async fn kill_session(
     Ok(())
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SkillInfo {
+    pub name: String,
+    pub category: String,
+    pub description: String,
+}
+
+fn extract_frontmatter_description(content: &str) -> Option<String> {
+    let mut in_front = false;
+    for (i, line) in content.lines().enumerate() {
+        if i == 0 && line.trim() == "---" {
+            in_front = true;
+            continue;
+        }
+        if in_front && line.trim() == "---" {
+            break;
+        }
+        if in_front {
+            let trimmed = line.trim();
+            if let Some(rest) = trimmed.strip_prefix("description:") {
+                let value = rest.trim().trim_matches('"').trim_matches('\'');
+                if !value.is_empty() && !value.starts_with('|') && !value.starts_with('>') {
+                    return Some(value.to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
+fn collect_skill_descriptions(
+    dir: &std::path::Path,
+    map: &mut std::collections::HashMap<String, String>,
+    depth: usize,
+) {
+    if depth > 3 {
+        return;
+    }
+    let skill_md = dir.join("SKILL.md");
+    if skill_md.exists() {
+        if let Ok(content) = std::fs::read_to_string(&skill_md) {
+            if let Some(desc) = extract_frontmatter_description(&content) {
+                if let Some(name) = dir.file_name().and_then(|n| n.to_str()) {
+                    map.insert(name.to_string(), desc);
+                }
+            }
+        }
+        return;
+    }
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                collect_skill_descriptions(&entry.path(), map, depth + 1);
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn list_skills() -> Result<Vec<SkillInfo>, String> {
+    let output = super::sessions::hermes_command()
+        .args(["skills", "list"])
+        .output()
+        .map_err(|e| format!("Failed to run hermes skills list: {e}"))?;
+
+    // Build description map from ~/.hermes/skills/
+    let mut desc_map = std::collections::HashMap::new();
+    if let Some(home) = dirs::home_dir() {
+        let skills_dir = home.join(".hermes").join("skills");
+        if skills_dir.is_dir() {
+            collect_skill_descriptions(&skills_dir, &mut desc_map, 0);
+        }
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut skills = Vec::new();
+
+    for line in stdout.lines() {
+        if !line.starts_with('│') {
+            continue;
+        }
+        let cols: Vec<&str> = line.split('│').collect();
+        if cols.len() < 3 {
+            continue;
+        }
+        let name = cols[1].trim();
+        let category = cols[2].trim();
+        if name.is_empty() || name == "Name" || name.starts_with('─') || name.starts_with('━') {
+            continue;
+        }
+        let description = desc_map.get(name).cloned().unwrap_or_default();
+        skills.push(SkillInfo {
+            name: name.to_string(),
+            category: category.to_string(),
+            description,
+        });
+    }
+
+    Ok(skills)
+}
+
 #[tauri::command]
 pub async fn send_message(
     app: AppHandle,
@@ -102,6 +203,7 @@ pub async fn send_message(
     session_tag: String,
     image: Option<String>,
     working_dir: Option<String>,
+    skills: Option<Vec<String>>,
 ) -> Result<(), String> {
     // No -Q: non-quiet mode streams output token-by-token as the model generates.
     // PYTHONUNBUFFERED=1 ensures Python flushes stdout on each write.
@@ -118,6 +220,17 @@ pub async fn send_message(
         let path = write_image_persistent(data_url)?;
         args.push("--image".into());
         args.push(path.to_string_lossy().to_string());
+    }
+
+    // Skill preloading: each skill passed as a separate --skills flag.
+    if let Some(ref skill_list) = skills {
+        for skill in skill_list {
+            let s = skill.trim();
+            if !s.is_empty() {
+                args.push("--skills".into());
+                args.push(s.to_string());
+            }
+        }
     }
 
     // Use pipe (not PTY) so hermes detects non-TTY stdout and runs in line-buffered

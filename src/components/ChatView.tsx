@@ -6,6 +6,8 @@ import MessageBubble from "./chat/MessageBubble";
 import GoalBar from "./chat/GoalBar";
 import PersonalityPicker from "./chat/PersonalityPicker";
 import SlashCommandMenu, { SLASH_COMMANDS, SlashCommand } from "./chat/SlashCommandMenu";
+import RefPickerPanel from "./chat/RefPickerPanel";
+import { RefItem } from "./chat/AtMentionMenu";
 
 interface AttachedImage {
   dataUrl: string;
@@ -17,7 +19,7 @@ interface Props {
   streaming: boolean;
   onSend: (
     text: string,
-    options?: { image?: string; imageFilename?: string }
+    options?: { image?: string; imageFilename?: string; skills?: string[] }
   ) => void;
   onQueue: (text: string) => void;
   onCancelQueue: (index: number) => void;
@@ -34,6 +36,7 @@ interface Props {
   onPtyWrite?: (data: string) => void;
   pendingInputAppend?: { id: number; text: string } | null;
   onGoToDashboard?: () => void;
+  workingDir?: string | null;
 }
 
 const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"];
@@ -105,6 +108,7 @@ export default function ChatView({
   onPtyWrite,
   pendingInputAppend,
   onGoToDashboard,
+  workingDir,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -133,6 +137,11 @@ export default function ChatView({
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashQuery, setSlashQuery] = useState("");
   const [slashIdx, setSlashIdx] = useState(0);
+
+  const [atOpen, setAtOpen] = useState(false);
+  const [atQuery, setAtQuery] = useState("");
+  const [selectedRefs, setSelectedRefs] = useState<RefItem[]>([]);
+  const atTriggerPosRef = useRef<number>(0);
 
   const [isRecording, setIsRecording] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -171,6 +180,40 @@ export default function ChatView({
     recognitionRef.current = recognition;
     recognition.start();
   }, [isRecording]);
+
+  const handleAtSelect = useCallback((item: RefItem) => {
+    setAtOpen(false);
+    // Remove the @query trigger text from the textarea
+    const ta = textareaRef.current;
+    if (ta) {
+      const val = ta.value;
+      const triggerEnd = atTriggerPosRef.current + 1 + atQuery.length;
+      ta.value = val.slice(0, atTriggerPosRef.current) + val.slice(triggerEnd);
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+      setIsTyping(ta.value.length > 0);
+    }
+    textareaRef.current?.focus();
+    setSelectedRefs((prev) => {
+      if (prev.some((r) => r.type === item.type && r.name === item.name)) return prev;
+      return [...prev, item];
+    });
+  }, [atQuery]);
+
+  const openAtMenu = useCallback(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart ?? ta.value.length;
+    const val = ta.value;
+    ta.value = val.slice(0, pos) + "@" + val.slice(pos);
+    ta.focus();
+    const newPos = pos + 1;
+    ta.setSelectionRange(newPos, newPos);
+    atTriggerPosRef.current = pos;
+    setAtOpen(true);
+    setAtQuery("");
+    setIsTyping(ta.value.length > 0);
+  }, []);
 
   const attachImageFile = async (file: File) => {
     if (!SUPPORTED_IMAGE_TYPES.includes(file.type)) return false;
@@ -263,6 +306,7 @@ export default function ChatView({
       )
     : [];
 
+
   const handleSlashSelect = (cmd: SlashCommand) => {
     setSlashOpen(false);
     if (cmd.directSend) {
@@ -308,6 +352,11 @@ export default function ChatView({
         return;
       }
     }
+    if (atOpen && e.key === "Escape") {
+      e.preventDefault();
+      setAtOpen(false);
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       submit();
@@ -315,16 +364,26 @@ export default function ChatView({
   };
 
   const submit = () => {
-    const text = textareaRef.current?.value.trim();
-    if (!text && !attachedImage) return;
-    const payload = text ?? "";
+    const rawText = textareaRef.current?.value.trim() ?? "";
+    if (!rawText && !attachedImage && selectedRefs.length === 0) return;
+
+    const fileRefs = selectedRefs.filter((r) => r.type === "file");
+    const skillRefs = selectedRefs.filter((r) => r.type === "skill");
+    const skillNames = skillRefs.map((r) => r.name);
+
+    const fileAppend = fileRefs
+      .map((r) => `\n\n--- 文件: ${r.name} ---\n${r.content ?? "(内容不可用)"}`)
+      .join("");
+    const payload = rawText + fileAppend;
+
+    const extraOpts = skillNames.length > 0 ? { skills: skillNames } : {};
+
     if (streaming) {
-      // Queued sends do not yet carry images (image lives on the next live turn).
       onQueue(payload);
     } else if (attachedImage) {
-      onSend(payload, { image: attachedImage.dataUrl, imageFilename: attachedImage.filename });
+      onSend(payload, { image: attachedImage.dataUrl, imageFilename: attachedImage.filename, ...extraOpts });
     } else {
-      onSend(payload);
+      onSend(payload, Object.keys(extraOpts).length > 0 ? extraOpts : undefined);
     }
     if (textareaRef.current) {
       textareaRef.current.value = "";
@@ -332,6 +391,7 @@ export default function ChatView({
     }
     setIsTyping(false);
     setAttachedImage(null);
+    setSelectedRefs([]);
   };
 
   const submitBackground = () => {
@@ -356,7 +416,7 @@ export default function ChatView({
     setIsTyping(false);
   };
 
-  // Auto-resize textarea + track isTyping + slash menu detection
+  // Auto-resize textarea + track isTyping + slash/@ menu detection
   const handleInput = () => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -370,6 +430,16 @@ export default function ChatView({
       setSlashIdx(0);
     } else {
       setSlashOpen(false);
+    }
+    const cursorPos = ta.selectionStart ?? val.length;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+    if (atMatch) {
+      atTriggerPosRef.current = cursorPos - atMatch[0].length;
+      setAtOpen(true);
+      setAtQuery(atMatch[1]);
+      } else {
+      setAtOpen(false);
     }
   };
 
@@ -550,6 +620,29 @@ export default function ChatView({
           onCompress={onCompress}
         />
 
+        {selectedRefs.length > 0 && (
+          <div className="image-attachment-row">
+            {selectedRefs.map((ref) => (
+              <div key={`${ref.type}-${ref.name}`} className="ref-chip ui-font">
+                <span className="ref-chip-icon">{ref.type === "file" ? "📄" : "⚙"}</span>
+                <span className="ref-chip-name">{ref.name}</span>
+                <button
+                  type="button"
+                  className="image-attachment-remove ref-chip-remove"
+                  onClick={() =>
+                    setSelectedRefs((prev) =>
+                      prev.filter((r) => !(r.type === ref.type && r.name === ref.name))
+                    )
+                  }
+                  title="移除"
+                >
+                  <Icon name="close" size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {attachedImage && (
           <div className="image-attachment-row">
             <div className="image-attachment">
@@ -575,6 +668,13 @@ export default function ChatView({
               items={filteredSlashCmds}
               selectedIndex={slashIdx}
               onSelect={handleSlashSelect}
+            />
+          )}
+          {atOpen && (
+            <RefPickerPanel
+              workingDir={workingDir ?? null}
+              onSelect={handleAtSelect}
+              onClose={() => { setAtOpen(false); textareaRef.current?.focus(); }}
             />
           )}
           <div className="input-row">
@@ -637,6 +737,14 @@ export default function ChatView({
 
         <div className="input-hints ui-font">
           <div className="input-shortcuts">
+            <button
+              type="button"
+              className="bg-run-btn ui-font"
+              onClick={openAtMenu}
+              title="引用文件或技能（也可直接输入 @）"
+            >
+              @
+            </button>
             <PersonalityPicker onSend={onSend} />
             {streaming && onStop && (
               <button

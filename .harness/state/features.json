@@ -229,6 +229,13 @@
       "acceptance": "设置页字体大小 section 显示三行选择器；切换档位后对应区域字体立即变化；重启应用后字体设置保持",
       "depends_on": [],
       "passes": true
+    },
+    {
+      "id": "feat-216",
+      "description": "@引用菜单 — 输入框底部工具栏新增 [@] 按钮（与人格/后台按钮同排）；点击按钮或输入框内键入 @ 均可唤出浮层菜单；菜单分两组：文件（当前工作目录 2 层展开，复用 feat-210 数据接口）和技能（hermes skills list 解析，按 category 分组）；可搜索过滤；↑↓ 键盘导航，Enter 选中，Esc 关闭；选中项在输入框上方以 chip 展示（复用 feat-109 chip 样式）可 × 删除，支持多选；发送时文件 chip → Rust 读取内容附加到消息体，技能 chip → 拼 --skills 参数传给 hermes chat",
+      "acceptance": "点击 [@] 按钮或键入 @ 弹出菜单；菜单含文件和技能两组，可搜索；键盘和鼠标均可选择；选中后输入框上方出现 chip；可选多个文件和技能；发送时文件内容正确附加到消息，技能正确以 --skills 参数加载；chip 可单独删除",
+      "depends_on": ["feat-209", "feat-210"],
+      "passes": true
     }
   ]
 }

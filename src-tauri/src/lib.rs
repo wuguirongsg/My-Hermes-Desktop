@@ -311,6 +311,7 @@ pub fn run() {
             commands::sessions::undo_last_turn,
             commands::sessions::set_hermes_path,
             commands::chat::send_message,
+            commands::chat::list_skills,
             commands::chat::kill_session,
             commands::chat::get_hermes_info,
             commands::chat::get_hermes_model_config,

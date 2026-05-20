@@ -464,7 +464,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
     async (
       text: string,
       targetSessionId: string | null,
-      options?: { hideUserMessage?: boolean; image?: string; imageFilename?: string }
+      options?: { hideUserMessage?: boolean; image?: string; imageFilename?: string; skills?: string[] }
     ) => {
       if (!text.trim()) return;
 
@@ -557,6 +557,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
           sessionTag,
           image: options?.image ?? null,
           workingDir: workingDir ?? null,
+          skills: options?.skills ?? null,
         });
       } catch (e) {
         const message = String(e);
@@ -611,7 +612,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
   const handleSendMessage = useCallback(
     async (
       text: string,
-      options?: { hideUserMessage?: boolean; image?: string; imageFilename?: string }
+      options?: { hideUserMessage?: boolean; image?: string; imageFilename?: string; skills?: string[] }
     ) => {
       if (!activeSessionId && !text.trim().startsWith("/")) {
         await sendToSession(text, null, options);
@@ -1073,6 +1074,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
           bgRunningCount={bgRunningCount}
           onPtyWrite={handlePtyWrite}
           pendingInputAppend={pendingInputAppend}
+          workingDir={workingDir}
         />
       </div>
     </div>
