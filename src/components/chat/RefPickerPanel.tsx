@@ -103,6 +103,19 @@ export default function RefPickerPanel({ workingDir, onSelect, onClose }: Props)
     }
   };
 
+  const handleDirSelect = async (entry: FileEntry) => {
+    try {
+      const children = await invoke<FileEntry[]>("list_dir", { path: entry.path });
+      const lines = [`目录: ${entry.path}`, "文件列表："];
+      for (const c of children) {
+        lines.push(`  ${c.is_dir ? "📁 " + c.name + "/" : "📄 " + c.name}`);
+      }
+      onSelect({ type: "file", name: entry.name + "/", path: entry.path, content: lines.join("\n") });
+    } catch {
+      onSelect({ type: "file", name: entry.name + "/", path: entry.path, content: `目录: ${entry.path}` });
+    }
+  };
+
   const handleSkillClick = (skill: SkillInfo) => {
     onSelect({ type: "skill", name: skill.name, category: skill.category });
   };
@@ -230,17 +243,30 @@ export default function RefPickerPanel({ workingDir, onSelect, onClose }: Props)
             {dirs.map((d, i) => {
               const idx = (parentPath ? 1 : 0) + i;
               return (
-                <button
+                <div
                   key={d.path}
                   className={`ref-picker-row ref-picker-dir${focusedIndex === idx ? " focused" : ""}`}
                   data-idx={idx}
-                  onClick={() => handleFileClick(d)}
-                  type="button"
                 >
-                  <span className="ref-picker-row-icon">📁</span>
-                  <span className="ref-picker-row-name">{d.name}</span>
-                  <span className="ref-picker-row-arrow">›</span>
-                </button>
+                  <button
+                    className="ref-picker-dir-nav"
+                    onClick={() => { setCurrentPath(d.path); setSearch(""); }}
+                    type="button"
+                    title="进入目录"
+                  >
+                    <span className="ref-picker-row-icon">📁</span>
+                    <span className="ref-picker-row-name">{d.name}</span>
+                    <span className="ref-picker-row-arrow">›</span>
+                  </button>
+                  <button
+                    className="ref-picker-dir-ref"
+                    onClick={() => handleDirSelect(d)}
+                    type="button"
+                    title="引用此目录"
+                  >
+                    引用
+                  </button>
+                </div>
               );
             })}
             {fileItems.map((f, i) => {

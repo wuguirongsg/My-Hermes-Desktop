@@ -3161,6 +3161,52 @@ body {
   flex-shrink: 0;
 }
 
+/* Directory row: nav area + ref button */
+.ref-picker-dir {
+  padding: 0;
+  cursor: default;
+}
+
+.ref-picker-dir-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 6px 8px 6px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.ref-picker-dir-ref {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  margin: 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.ref-picker-dir:hover .ref-picker-dir-ref,
+.ref-picker-dir.focused .ref-picker-dir-ref {
+  opacity: 1;
+}
+
+.ref-picker-dir-ref:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
 .ref-picker-empty {
   padding: 20px 14px;
   font-size: 12px;
