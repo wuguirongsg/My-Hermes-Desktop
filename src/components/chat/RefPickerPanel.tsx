@@ -20,9 +20,10 @@ interface Props {
   workingDir: string | null;
   onSelect: (item: RefItem) => void;
   onClose: () => void;
+  onAsk?: (text: string) => void;
 }
 
-export default function RefPickerPanel({ workingDir, onSelect, onClose }: Props) {
+export default function RefPickerPanel({ workingDir, onSelect, onClose, onAsk }: Props) {
   const [tab, setTab] = useState<"file" | "skill">("file");
   const [search, setSearch] = useState("");
   const [currentPath, setCurrentPath] = useState(workingDir ?? "");
@@ -325,23 +326,41 @@ export default function RefPickerPanel({ workingDir, onSelect, onClose }: Props)
               <div className="ref-picker-empty ui-font">加载技能列表...</div>
             )}
             {skillsLoaded && filteredSkills.map((skill, i) => (
-              <button
+              <div
                 key={skill.name}
                 className={`ref-picker-skill-row${focusedIndex === i ? " focused" : ""}`}
                 data-idx={i}
-                onClick={() => handleSkillClick(skill)}
-                type="button"
               >
-                <div className="ref-picker-skill-top">
-                  <span className="ref-picker-skill-name">{skill.name}</span>
-                  {skill.category && (
-                    <span className="ref-picker-skill-cat">{skill.category}</span>
+                <button
+                  className="ref-picker-skill-main"
+                  onClick={() => handleSkillClick(skill)}
+                  type="button"
+                >
+                  <div className="ref-picker-skill-top">
+                    <span className="ref-picker-skill-name">{skill.name}</span>
+                    {skill.category && (
+                      <span className="ref-picker-skill-cat">{skill.category}</span>
+                    )}
+                  </div>
+                  {skill.description && (
+                    <div className="ref-picker-skill-desc">{skill.description}</div>
                   )}
-                </div>
-                {skill.description && (
-                  <div className="ref-picker-skill-desc">{skill.description}</div>
+                </button>
+                {onAsk && (
+                  <button
+                    className="ref-picker-skill-explain"
+                    type="button"
+                    title="让 Hermes 解释这个技能"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAsk(`请介绍一下 hermes 的「${skill.name}」技能，它的主要用途是什么，能帮我做哪些事情？用简短的中文回答`);
+                      onClose();
+                    }}
+                  >
+                    解释
+                  </button>
                 )}
-              </button>
+              </div>
             ))}
             {skillsLoaded && filteredSkills.length === 0 && (
               <div className="ref-picker-empty ui-font">无匹配技能</div>

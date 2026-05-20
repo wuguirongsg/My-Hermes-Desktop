@@ -675,6 +675,7 @@ export default function ChatView({
               workingDir={workingDir ?? null}
               onSelect={handleAtSelect}
               onClose={() => { setAtOpen(false); textareaRef.current?.focus(); }}
+              onAsk={(text) => { setAtOpen(false); onSend(text); }}
             />
           )}
           <div className="input-row">

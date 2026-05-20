@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-20 15:30] BUILD feat-217 技能行"解释"悬停按钮 — hover 出现"解释"按钮，点击向 hermes 发询问技能用途的消息 → sessions/2026-05-20-1530.md
+
 [2026-05-19 16:45] FIX startDragging() 权限缺失 — Tauri 2.x 所有 invoke 需在 capabilities 显式声明；补加 core:window:allow-start-dragging；静默拦截无报错是常见坑
 
 [2026-05-19 16:35] FIX macOS 标题栏拖动改用 JS startDragging() — -webkit-app-region:drag 在 WKWebView+Overlay 组合下不可靠；mousedown 时调 Tauri startDragging() API，closest() 过滤掉 button/input 等交互元素

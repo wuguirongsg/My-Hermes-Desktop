@@ -3248,19 +3248,52 @@ body {
 /* Skill rows */
 .ref-picker-skill-row {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
   width: 100%;
-  padding: 7px 14px;
   border: none;
   background: transparent;
-  cursor: pointer;
-  text-align: left;
   border-bottom: 1px solid var(--hairline-soft);
   transition: background 0.1s;
 }
 .ref-picker-skill-row:hover,
 .ref-picker-skill-row.focused { background: var(--primary-glow); }
+
+.ref-picker-skill-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.ref-picker-skill-explain {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  margin: 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  background: transparent;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  opacity: 0;
+}
+.ref-picker-skill-row:hover .ref-picker-skill-explain,
+.ref-picker-skill-row.focused .ref-picker-skill-explain { opacity: 1; }
+.ref-picker-skill-explain:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
 
 .ref-picker-skill-top {
   display: flex;
