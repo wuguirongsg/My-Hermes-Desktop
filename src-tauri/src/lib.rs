@@ -16,6 +16,9 @@ pub struct Session {
     pub message_count: Option<u32>,
     pub cost: Option<f64>,
     pub model: Option<String>,
+    /// Content of the most recent user message, used as the sidebar subtitle.
+    /// None when the session has a single user turn (subtitle would duplicate the title).
+    pub last_message: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -190,9 +193,36 @@ fn setup_app_menu(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>
     let file_sep = PredefinedMenuItem::separator(app)?;
     let file = Submenu::with_items(app, "文件", true, &[&new_session, &snapshot, &file_sep, &quit])?;
 
+    // Standard edit items — these register the native ⌘C/⌘V/⌘X/⌘A/⌘Z/⌘⇧Z
+    // accelerators. Without them in a custom menu, copy/paste/etc. stop working
+    // in the webview on macOS.
+    let undo = PredefinedMenuItem::undo(app, Some("撤销"))?;
+    let redo = PredefinedMenuItem::redo(app, Some("重做"))?;
+    let edit_sep1 = PredefinedMenuItem::separator(app)?;
+    let cut = PredefinedMenuItem::cut(app, Some("剪切"))?;
+    let copy = PredefinedMenuItem::copy(app, Some("复制"))?;
+    let paste = PredefinedMenuItem::paste(app, Some("粘贴"))?;
+    let select_all = PredefinedMenuItem::select_all(app, Some("全选"))?;
+    let edit_sep2 = PredefinedMenuItem::separator(app)?;
     let stop_agent = MenuItem::with_id(app, "stop-agent", "停止运行", true, None::<&str>)?;
     let shortcuts = MenuItem::with_id(app, "show-shortcuts", "快捷键", true, Some("CmdOrCtrl+/"))?;
-    let edit = Submenu::with_items(app, "编辑", true, &[&stop_agent, &shortcuts])?;
+    let edit = Submenu::with_items(
+        app,
+        "编辑",
+        true,
+        &[
+            &undo,
+            &redo,
+            &edit_sep1,
+            &cut,
+            &copy,
+            &paste,
+            &select_all,
+            &edit_sep2,
+            &stop_agent,
+            &shortcuts,
+        ],
+    )?;
 
     let chat = MenuItem::with_id(app, "open-chat", "对话", true, None::<&str>)?;
     let memory = MenuItem::with_id(app, "open-memory", "记忆", true, None::<&str>)?;

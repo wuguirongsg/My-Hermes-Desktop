@@ -82,6 +82,8 @@
 
 （格式：`[YYYY-MM-DD] 描述 — 原因`）
 
+[2026-05-22] 会话列表内浮层会被裁剪 — `.session-list` 有 `overflow-y:auto`，任何 `position:absolute` 的弹层/popover 都会被列表容器裁掉。处理方式：会话项内的编辑类 UI（标签编辑、删除确认）用「内联展开」而非浮层；若确需浮层须用 `position:fixed` + 计算坐标。
+
 [2026-05-15] ACP gateway 方案回滚到 master — 实现后会话/对话出现多处问题。根因：dispatcher 把 notification 流与 response 混在同一 channel，用合成事件 `__prompt_done__` 做哨兵，导致 session/new response 提前触发循环退出；同时 get_session_history 未迁移到 ACP 路径，切历史对话状态错乱。干净的重做方案：notification 流与 response future 分离，不注入合成信号。当前决定搁置 Phase 2 ACP 迁移，继续 one-shot 进程模型。feat-111 /steer 依赖 ACP 长连接，暂时跟随搁置。
 
 - [2026-05-13] `hermes chat -q <slash>` 不会经过交互式 CLI 的 slash command handler，`/undo`、`/title` 等会被当作普通消息发给模型 — 一次性进程模式绕过了交互式 CLI 前端循环

@@ -64,7 +64,7 @@
   --tool-out-border: var(--hairline-dark);
 
   /* Dimensions */
-  --sidebar-w: 240px;
+  --sidebar-w: 280px;
   --app-titlebar-h: 36px;
   --topbar-h:  42px;
   --navbar-w:  52px;
@@ -1019,6 +1019,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 6px;
 }
 
 .sidebar-title {
@@ -1028,6 +1029,103 @@ body {
   letter-spacing: 0.10em;
   text-transform: uppercase;
   color: var(--muted);
+  flex-shrink: 0;
+}
+
+.sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.btn-sidebar-icon {
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.btn-sidebar-icon:hover {
+  background: var(--surface-card);
+  color: var(--primary);
+  border-color: var(--primary-disabled);
+}
+.btn-sidebar-icon.active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+.btn-sidebar-icon.spinning .ui-icon {
+  animation: sidebar-spin 0.6s linear;
+}
+@keyframes sidebar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.session-filter {
+  position: relative;
+}
+.session-filter-label {
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-filter-caret {
+  transform: rotate(90deg);
+  opacity: 0.6;
+}
+.session-filter-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 130px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+}
+.session-filter-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  color: var(--body);
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+.session-filter-item:hover { background: var(--surface-card); }
+.session-filter-item.sel { color: var(--primary); font-weight: 500; }
+.session-filter-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.session-filter-sep {
+  height: 1px;
+  background: var(--hairline);
+  margin: 4px 2px;
 }
 
 .btn-new-session {
@@ -1115,6 +1213,139 @@ body {
 .session-meta-chip .ui-icon {
   color: var(--muted-soft);
 }
+
+/* ── Session groups (time buckets) ── */
+.session-group-header {
+  padding: 10px 12px 4px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-soft);
+}
+
+/* ── Session subtitle (latest user message) ── */
+.session-item-subtitle {
+  font-size: 11px;
+  color: var(--muted-soft);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Session tag chip / add button ── */
+.session-tag-chip {
+  flex-shrink: 0;
+  max-width: 64px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-sans);
+}
+.session-tag-add {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px dashed var(--hairline);
+  background: transparent;
+  color: var(--muted-soft);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+.session-item:hover .session-tag-add { opacity: 1; }
+.session-tag-add:hover { color: var(--primary); border-color: var(--primary); }
+
+/* ── Inline tag editor ── */
+.tag-editor {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+.tag-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.tag-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s;
+}
+.tag-swatch:hover { transform: scale(1.12); }
+.tag-swatch.sel {
+  border-color: var(--canvas);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.tag-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-input {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  background: var(--canvas);
+  color: var(--body);
+  font-size: 12px;
+  font-family: var(--font-sans);
+}
+.tag-input:focus { outline: none; border-color: var(--primary); }
+.tag-save,
+.tag-clear,
+.tag-cancel {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: var(--radius-xs);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+}
+.tag-save {
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+.tag-save:hover { background: var(--primary); color: var(--on-dark); }
+.tag-clear {
+  background: transparent;
+  color: var(--muted);
+}
+.tag-clear:hover { background: rgba(198, 69, 69, 0.1); color: var(--error); }
+.tag-cancel {
+  background: transparent;
+  color: var(--muted);
+}
+.tag-cancel:hover { background: var(--surface-cream-strong); color: var(--body); }
 
 .session-badge {
   width: 22px;

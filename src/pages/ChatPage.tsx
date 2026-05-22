@@ -1024,6 +1024,7 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
         onSelect={handleSelectSession}
         onNew={handleNewSession}
         onDelete={handleDeleteSession}
+        onRefresh={loadSessions}
         badges={sessionBadges}
       />
       <div className="content-area">

@@ -4,6 +4,10 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-22 11:18] FIX 侧边栏标签弹层空标签也保留 X(取消)按钮；修复 ⌘C/V/A/Z/Z 失效 — 自定义 set_menu 替换默认菜单后「编辑」子菜单漏了标准编辑项，补 undo/redo/cut/copy/paste/select_all 预定义项（lib.rs setup_app_menu）
+
+[2026-05-22 11:02] DONE 会话侧边栏改造 6 项 — 刷新按钮 / 标题15字+副标题(末条user消息) / 加宽280px / 颜色标签(≤5字+9色板,localStorage)+顶栏筛选下拉 / 日期≤3天相对>3天M/D / 24h-3天-更早分组；后端 Session 加 last_message；标签编辑用内联展开避免 overflow 裁剪 → sessions/2026-05-22-1102.md
+
 [2026-05-20 19:25] FIX 工具显隐三项调整 — 默认改为关闭；纯工具消息整条隐藏（every tool block → return null）；按钮从大文字改为版本号右侧小图标（app-titlebar-icon-btn 样式）
 
 [2026-05-20 19:10] FIX 工具调用显隐快捷开关 — TopBar 新增「工具」按钮（激活高亮）；showTools state 持久化 localStorage；透传 ChatView→MessageBubble，tool block 条件渲染；默认显示

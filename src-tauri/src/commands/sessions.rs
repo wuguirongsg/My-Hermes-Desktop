@@ -416,10 +416,29 @@ fn remove_last_turn_from_jsonl(content: &str) -> Result<String, String> {
     })
 }
 
+/// Extract the plain-text content of a message, handling both string content
+/// and the array-of-blocks form (picks the first `text` block). Capped to a
+/// short preview length since the sidebar only needs title/subtitle previews.
+fn message_text(m: &serde_json::Value) -> Option<String> {
+    let raw = m.get("content").and_then(|c| {
+        if let Some(s) = c.as_str() {
+            Some(s.trim().to_string())
+        } else if let Some(arr) = c.as_array() {
+            arr.iter()
+                .find(|b| b.get("type").and_then(|t| t.as_str()) == Some("text"))
+                .and_then(|b| b.get("text").and_then(|t| t.as_str()))
+                .map(|s| s.trim().to_string())
+        } else {
+            None
+        }
+    })?;
+    (!raw.is_empty()).then(|| raw.chars().take(80).collect::<String>())
+}
+
 fn read_session_info(
     path: &std::path::Path,
     fs_updated: &str,
-) -> (String, String, u32, String, Option<String>) {
+) -> (String, String, u32, String, Option<String>, Option<String>) {
     let content = match std::fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => {
@@ -428,6 +447,7 @@ fn read_session_info(
                 "Untitled".into(),
                 0,
                 fs_updated.into(),
+                None,
                 None,
             )
         }
@@ -465,52 +485,56 @@ fn read_session_info(
                 .unwrap_or_default();
 
             let count = messages.len() as u32;
+            let user_msgs: Vec<&serde_json::Value> = messages
+                .iter()
+                .filter(|m| m.get("role").and_then(|r| r.as_str()) == Some("user"))
+                .collect();
+
             let title = obj
                 .get("title")
                 .and_then(|v| v.as_str())
                 .map(|s| s.trim().to_string())
                 .filter(|s| !s.is_empty())
-                .or_else(|| {
-                    messages
-                        .iter()
-                        .find(|m| m.get("role").and_then(|r| r.as_str()) == Some("user"))
-                        .and_then(|m| {
-                            let c = m.get("content")?;
-                            if let Some(s) = c.as_str() {
-                                Some(s.trim().chars().take(60).collect::<String>())
-                            } else if let Some(arr) = c.as_array() {
-                                arr.iter()
-                                    .find(|b| {
-                                        b.get("type").and_then(|t| t.as_str()) == Some("text")
-                                    })
-                                    .and_then(|b| b.get("text").and_then(|t| t.as_str()))
-                                    .map(|s| s.trim().chars().take(60).collect::<String>())
-                            } else {
-                                None
-                            }
-                        })
-                })
+                .or_else(|| user_msgs.first().and_then(|m| message_text(m)))
                 .unwrap_or_else(|| id.clone());
 
-            return (id, title, count, updated, model);
+            // Subtitle: the latest user message, only when there is more than one
+            // user turn (otherwise it would just repeat the title).
+            let last_message = (user_msgs.len() >= 2)
+                .then(|| user_msgs.last().and_then(|m| message_text(m)))
+                .flatten();
+
+            return (id, title, count, updated, model, last_message);
         }
     }
 
     // JSONL fallback
-    let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
-    let count = lines.len() as u32;
-    let title = lines
-        .iter()
+    let parsed: Vec<serde_json::Value> = content
+        .lines()
+        .filter(|l| !l.trim().is_empty())
         .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
-        .find(|obj| obj.get("role").and_then(|r| r.as_str()) == Some("user"))
-        .and_then(|obj| {
-            obj.get("content")
-                .and_then(|c| c.as_str())
-                .map(|s| s.trim().chars().take(60).collect::<String>())
-        })
+        .collect();
+    let count = parsed.len() as u32;
+    let user_msgs: Vec<&serde_json::Value> = parsed
+        .iter()
+        .filter(|obj| obj.get("role").and_then(|r| r.as_str()) == Some("user"))
+        .collect();
+    let title = user_msgs
+        .first()
+        .and_then(|m| message_text(m))
         .unwrap_or_else(|| filename_stem(path));
+    let last_message = (user_msgs.len() >= 2)
+        .then(|| user_msgs.last().and_then(|m| message_text(m)))
+        .flatten();
 
-    (filename_stem(path), title, count, fs_updated.into(), None)
+    (
+        filename_stem(path),
+        title,
+        count,
+        fs_updated.into(),
+        None,
+        last_message,
+    )
 }
 
 #[tauri::command]
@@ -557,7 +581,8 @@ pub async fn list_sessions() -> Result<Vec<Session>, String> {
                 })
                 .unwrap_or_default();
 
-            let (id, title, count, updated, model) = read_session_info(&path, &fs_updated);
+            let (id, title, count, updated, model, last_message) =
+                read_session_info(&path, &fs_updated);
             if id.is_empty() {
                 continue;
             }
@@ -572,6 +597,7 @@ pub async fn list_sessions() -> Result<Vec<Session>, String> {
                 message_count: Some(count),
                 cost: None,
                 model,
+                last_message,
             };
             by_id
                 .entry(id)

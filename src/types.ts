@@ -8,6 +8,8 @@ export interface Session {
   message_count?: number;
   cost?: number;
   model?: string;
+  /** Latest user message, shown as the sidebar subtitle. Absent for single-turn sessions. */
+  last_message?: string;
 }
 
 // ─── Message Blocks ───────────────────────────────────────────────────────────
