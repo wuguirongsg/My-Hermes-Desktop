@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { open as openUrl } from "@tauri-apps/plugin-shell";
@@ -172,6 +172,55 @@ interface Props {
   streaming: boolean;
   showTools?: boolean;
   onRetry: () => void;
+  model?: string | null;
+  memoryLoaded?: boolean | null;
+  assistantIndex?: number;
+  messageIndex?: number;
+}
+
+function GroundingPopover({
+  model,
+  memoryLoaded,
+  assistantIndex,
+  onClose,
+}: {
+  model?: string | null;
+  memoryLoaded?: boolean | null;
+  assistantIndex?: number;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose]);
+
+  return (
+    <div className="grounding-popover" ref={ref}>
+      <div className="grounding-row">
+        <span className="grounding-label">模型</span>
+        <span className="grounding-value">{model ?? "未知"}</span>
+      </div>
+      {assistantIndex !== undefined && (
+        <div className="grounding-row">
+          <span className="grounding-label">消息序号</span>
+          <span className="grounding-value">第 {assistantIndex} 条回复</span>
+        </div>
+      )}
+      <div className="grounding-row">
+        <span className="grounding-label">个人记忆</span>
+        <span className={`grounding-value ${memoryLoaded ? "ctx-memory-ok" : "ctx-memory-none"}`}>
+          {memoryLoaded === true ? "已加载" : memoryLoaded === false ? "未配置" : "未知"}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function formatTime(iso: string): string {
@@ -221,9 +270,10 @@ function toSpokenText(markdown: string): string {
   return text;
 }
 
-export default function MessageBubble({ message, isLastAssistant, streaming, showTools = true, onRetry }: Props) {
+export default function MessageBubble({ message, isLastAssistant, streaming, showTools = true, onRetry, model, memoryLoaded, assistantIndex }: Props) {
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [groundingOpen, setGroundingOpen] = useState(false);
   const isUser = message.role === "user";
 
   // 隐藏工具时，纯工具消息整条不渲染
@@ -305,6 +355,25 @@ export default function MessageBubble({ message, isLastAssistant, streaming, sho
         <span className="message-time">{formatTime(message.timestamp)}</span>
         {message.status === "error" && (
           <span style={{ fontSize: 10, color: "var(--error)" }}>error</span>
+        )}
+        {message.status === "done" && (
+          <div style={{ position: "relative" }}>
+            <button
+              className="grounding-btn ui-font"
+              onClick={() => setGroundingOpen((o) => !o)}
+              title="查看上下文来源"
+            >
+              ⓘ
+            </button>
+            {groundingOpen && (
+              <GroundingPopover
+                model={model}
+                memoryLoaded={memoryLoaded}
+                assistantIndex={assistantIndex}
+                onClose={() => setGroundingOpen(false)}
+              />
+            )}
+          </div>
         )}
         {(showCopy || showRetry) && (
           <div className="message-actions">

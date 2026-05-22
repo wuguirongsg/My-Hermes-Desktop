@@ -174,6 +174,14 @@ pub async fn read_text_file(path: String) -> Result<String, String> {
     std::fs::read_to_string(p).map_err(|e| format!("Cannot read file: {e}"))
 }
 
+/// Check whether ~/.hermes/memories/MEMORY.md exists and is non-empty.
+#[tauri::command]
+pub async fn check_memory_loaded() -> bool {
+    let Some(home) = dirs::home_dir() else { return false };
+    let path = home.join(".hermes").join("memories").join("MEMORY.md");
+    path.metadata().map(|m| m.len() > 0).unwrap_or(false)
+}
+
 /// Copy a user-selected file into ~/.hermes/uploads/YYYY-MM-DD/ and return the destination path.
 /// The caller passes the source path (from Tauri file dialog); we handle the rest.
 #[tauri::command]

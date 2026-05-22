@@ -5725,3 +5725,103 @@ html[data-ui-size="large"]  .session-item-meta  { font-size: 13px; }
   font-weight: 600;
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
+
+/* ─── Context Info Bar (feat-211) ─────────────────────────────────────────── */
+.context-info-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 16px;
+  font-size: 11px;
+  color: var(--muted-soft);
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline-soft);
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.ctx-memory-ok  { color: var(--primary); }
+.ctx-memory-none { color: var(--muted-soft); }
+
+/* ─── Grounding Popover (feat-213) ───────────────────────────────────────── */
+.grounding-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted-soft);
+  padding: 0 2px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s, color 0.12s;
+}
+.message-group:hover .grounding-btn,
+.grounding-btn:focus {
+  opacity: 1;
+  pointer-events: auto;
+}
+.grounding-btn:hover { color: var(--body); }
+
+.grounding-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  min-width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grounding-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+.grounding-label {
+  color: var(--muted);
+  min-width: 60px;
+  flex-shrink: 0;
+}
+.grounding-value {
+  color: var(--body);
+  font-weight: 500;
+}
+
+/* ─── Background Task Timeline (feat-212) ────────────────────────────────── */
+.bg-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--radius-xs);
+}
+.bg-timeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.bg-step-icon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+.bg-step-label {
+  color: var(--body);
+  word-break: break-word;
+}
+.bg-step-done   .bg-step-icon { color: var(--primary); }
+.bg-step-running .bg-step-icon { color: var(--warning, #f59e0b); }
+.bg-step-error  .bg-step-icon { color: var(--error); }
+.bg-step-pending .bg-step-icon { color: var(--muted-soft); }
+.bg-step-pending .bg-step-label { color: var(--muted); }

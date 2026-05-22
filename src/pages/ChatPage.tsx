@@ -155,6 +155,9 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
   const [sessionErrors, setSessionErrors] = useState<Record<string, string | null>>({});
 const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "queued" | "done">>({});
 
+  // Memory state (for feat-211 / feat-213)
+  const [memoryLoaded, setMemoryLoaded] = useState<boolean | null>(null);
+
   // Refs
   const justFinishedRef = useRef<Record<string, boolean>>({});
   const prevStreamingRef = useRef<Set<string>>(new Set());
@@ -205,6 +208,15 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
 
   activeSessionIdRef.current = activeSessionId;
 
+  const checkMemory = useCallback(async () => {
+    try {
+      const loaded = await invoke<boolean>("check_memory_loaded");
+      setMemoryLoaded(loaded);
+    } catch {
+      setMemoryLoaded(false);
+    }
+  }, []);
+
   const loadSessions = useCallback(async () => {
     try {
       const s = await invoke<Session[]>("list_sessions");
@@ -226,7 +238,12 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
   useEffect(() => {
     loadSessions();
     loadHermesInfo();
+    checkMemory();
   }, []);
+
+  useEffect(() => {
+    checkMemory();
+  }, [activeSessionId]);
 
   // 同步 streaming 状态到系统托盘图标
   useEffect(() => {
@@ -1076,6 +1093,8 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
         <ChatView
           messages={messages}
           streaming={streaming}
+          memoryLoaded={memoryLoaded}
+          currentModel={status?.model ?? null}
           onSend={handleSendMessage}
           onQueue={(text) => {
             if (!activeSessionId) return;

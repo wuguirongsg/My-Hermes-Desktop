@@ -198,7 +198,7 @@
       "description": "隐式上下文 info 条 — 对话区顶部（GoalBar 下方）显示一条淡色 info 行，展示当前 hermes 进程读取的上下文摘要：会话历史消息条数、个人记忆是否已加载（检测 ~/.hermes/memories/MEMORY.md 是否存在且非空）；新建会话或切换会话时自动更新；让用户在发送前知道系统「看到了什么」",
       "acceptance": "对话区顶部显示 info 条，格式如「已加载：会话历史 12 条 · 个人记忆已加载」；条数与当前 messages 数组同步；记忆状态通过 Rust 侧检测文件得出；新会话时重置为「新会话 · 个人记忆已加载/未配置」",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-212",
@@ -207,14 +207,14 @@
       "depends_on": [
         "feat-108"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-213",
       "description": "Grounding 气泡 — 每条 assistant 消息 header 区域加 ⓘ 按钮，点击弹出 Popover 显示本条回复的上下文来源信息：当前使用的模型（provider · model）、本条消息在会话中的位置（第 N 条）、个人记忆是否已加载；Popover 点击外部关闭",
       "acceptance": "assistant 消息 header 出现 ⓘ 按钮；点击弹出 Popover，展示模型名/消息序号/记忆状态三项；信息准确；点击外部关闭；不影响现有 hover 操作",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-214",

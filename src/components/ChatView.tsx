@@ -45,6 +45,8 @@ interface Props {
   onGoToDashboard?: () => void;
   workingDir?: string | null;
   showTools?: boolean;
+  memoryLoaded?: boolean | null;
+  currentModel?: string | null;
 }
 
 const SUPPORTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/bmp"];
@@ -120,6 +122,8 @@ export default function ChatView({
   onGoToDashboard,
   workingDir,
   showTools = true,
+  memoryLoaded = null,
+  currentModel = null,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -526,9 +530,28 @@ export default function ChatView({
       ? messages[messages.length - 1 - lastAssistantIdx].id
       : null;
 
+  const memoryText = memoryLoaded === true ? "个人记忆已加载" : memoryLoaded === false ? "个人记忆未配置" : null;
+
+  // Pre-compute assistantIndex per message for Grounding popover
+  const assistantIndexMap = new Map<string, number>();
+  let aCount = 0;
+  for (const m of messages) {
+    if (m.role === "assistant") {
+      aCount += 1;
+      assistantIndexMap.set(m.id, aCount);
+    }
+  }
+
   return (
     <div className="main-area">
       <GoalBar streaming={streaming} onSend={onSend} />
+      {/* Context info bar */}
+      <div className="context-info-bar ui-font">
+        {messages.length === 0
+          ? <>新会话{memoryText && <> · <span className={memoryLoaded ? "ctx-memory-ok" : "ctx-memory-none"}>{memoryText}</span></>}</>
+          : <>已加载：会话历史 {messages.length} 条{memoryText && <> · <span className={memoryLoaded ? "ctx-memory-ok" : "ctx-memory-none"}>{memoryText}</span></>}</>
+        }
+      </div>
       {/* Messages */}
       {messages.length === 0 ? (
         <div className="chat-messages">
@@ -570,7 +593,7 @@ export default function ChatView({
         </div>
       ) : (
         <div className="chat-messages">
-          {messages.map((msg) => (
+          {messages.map((msg, idx) => (
             <MessageBubble
               key={msg.id}
               message={msg}
@@ -578,6 +601,10 @@ export default function ChatView({
               streaming={streaming}
               showTools={showTools}
               onRetry={onRetryLastMessage}
+              model={currentModel}
+              memoryLoaded={memoryLoaded}
+              assistantIndex={assistantIndexMap.get(msg.id)}
+              messageIndex={idx + 1}
             />
           ))}
           {error && (() => {

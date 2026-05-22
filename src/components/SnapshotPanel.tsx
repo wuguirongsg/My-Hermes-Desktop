@@ -31,6 +31,38 @@ interface Props {
   onBgCountChange?: (running: number) => void;
 }
 
+interface TimelineStep {
+  status: "done" | "running" | "pending" | "error";
+  label: string;
+}
+
+function parseSteps(output: string): TimelineStep[] {
+  const steps: TimelineStep[] = [];
+  for (const line of output.split("\n")) {
+    const t = line.trim();
+    if (!t) continue;
+    if (/^[✓✔]/.test(t)) {
+      steps.push({ status: "done", label: t.replace(/^[✓✔]\s*/, "") });
+    } else if (/^[✖✗]/.test(t)) {
+      steps.push({ status: "error", label: t.replace(/^[✖✗]\s*/, "") });
+    } else if (/^⏳/.test(t)) {
+      steps.push({ status: "running", label: t.replace(/^⏳\s*/, "") });
+    } else if (/^○/.test(t)) {
+      steps.push({ status: "pending", label: t.replace(/^○\s*/, "") });
+    } else if (/(?:Running tool|Tool call|Calling tool|tool_use)[:：\s]/i.test(t)) {
+      steps.push({ status: "done", label: t });
+    }
+  }
+  return steps.slice(-10);
+}
+
+const STEP_ICONS: Record<TimelineStep["status"], string> = {
+  done: "✓",
+  running: "⏳",
+  pending: "○",
+  error: "✗",
+};
+
 const STORAGE_KEY = "hermes-snapshot-log";
 let snapshotCounter = 0;
 
@@ -425,6 +457,20 @@ export default function SnapshotPanel({
 
                     {expanded && (
                       <div className="snapshot-item-body">
+                        {bgFullOutput[task.id] !== undefined && (() => {
+                          const steps = parseSteps(bgFullOutput[task.id]);
+                          if (steps.length === 0) return null;
+                          return (
+                            <div className="bg-timeline">
+                              {steps.map((step, i) => (
+                                <div key={i} className={`bg-timeline-step bg-step-${step.status}`}>
+                                  <span className="bg-step-icon">{STEP_ICONS[step.status]}</span>
+                                  <span className="bg-step-label ui-font">{step.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         {task.tail && (
                           <pre className="bg-tail">{task.tail}</pre>
                         )}
