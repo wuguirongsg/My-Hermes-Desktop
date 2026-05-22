@@ -4,6 +4,12 @@ use regex::Regex;
 use std::process::Command;
 use std::sync::OnceLock;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 static IMAGE_MARKER_RE: OnceLock<Regex> = OnceLock::new();
 
 // On Windows: detect the WSL hermes full path once per app lifetime.
@@ -14,13 +20,22 @@ static IMAGE_MARKER_RE: OnceLock<Regex> = OnceLock::new();
 static WSL_HERMES_PATH: OnceLock<Option<String>> = OnceLock::new();
 
 #[cfg(target_os = "windows")]
+pub fn hide_command_window(cmd: &mut Command) -> &mut Command {
+    cmd.creation_flags(CREATE_NO_WINDOW)
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn hide_command_window(cmd: &mut Command) -> &mut Command {
+    cmd
+}
+
+#[cfg(target_os = "windows")]
 pub fn wsl_hermes_path() -> Option<&'static str> {
     WSL_HERMES_PATH
         .get_or_init(|| {
-            let out = std::process::Command::new("wsl.exe")
-                .args(["bash", "-l", "-c", "command -v hermes 2>/dev/null"])
-                .output()
-                .ok()?;
+            let mut cmd = std::process::Command::new("wsl.exe");
+            hide_command_window(cmd.args(["bash", "-l", "-c", "command -v hermes 2>/dev/null"]));
+            let out = cmd.output().ok()?;
             if out.status.success() {
                 let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
                 if !path.is_empty() {
@@ -45,10 +60,9 @@ fn use_wsl_hermes() -> bool {
 /// path (e.g. \\wsl.localhost\Ubuntu\home\user\.hermes).
 #[cfg(target_os = "windows")]
 fn wsl_hermes_home() -> Option<std::path::PathBuf> {
-    let out = std::process::Command::new("wsl.exe")
-        .args(["wslpath", "-m", "~/.hermes"])
-        .output()
-        .ok()?;
+    let mut cmd = std::process::Command::new("wsl.exe");
+    hide_command_window(cmd.args(["wslpath", "-m", "~/.hermes"]));
+    let out = cmd.output().ok()?;
     if out.status.success() {
         let path_str = String::from_utf8_lossy(&out.stdout).trim().to_string();
         if !path_str.is_empty() {
@@ -64,6 +78,7 @@ pub fn hermes_command() -> Command {
     #[cfg(target_os = "windows")]
     {
         let mut cmd = Command::new("wsl.exe");
+        hide_command_window(&mut cmd);
         if let Some(wsl_path) = wsl_hermes_path() {
             cmd.arg(wsl_path);
         } else {
@@ -274,16 +289,20 @@ pub fn hermes_binary() -> String {
 
     // Windows: use `where` to locate hermes in PATH
     #[cfg(target_os = "windows")]
-    if let Ok(out) = std::process::Command::new("where").arg("hermes").output() {
-        if out.status.success() {
-            let first_line = String::from_utf8_lossy(&out.stdout)
-                .lines()
-                .next()
-                .unwrap_or("")
-                .trim()
-                .to_string();
-            if !first_line.is_empty() {
-                return first_line;
+    {
+        let mut cmd = std::process::Command::new("where");
+        hide_command_window(cmd.arg("hermes"));
+        if let Ok(out) = cmd.output() {
+            if out.status.success() {
+                let first_line = String::from_utf8_lossy(&out.stdout)
+                    .lines()
+                    .next()
+                    .unwrap_or("")
+                    .trim()
+                    .to_string();
+                if !first_line.is_empty() {
+                    return first_line;
+                }
             }
         }
     }
@@ -308,10 +327,9 @@ pub async fn set_hermes_path(path: String) -> Result<String, String> {
     }
 
     // Quick smoke-test: hermes version
-    let out = std::process::Command::new(&expanded)
-        .arg("version")
-        .output()
-        .map_err(|e| format!("无法执行：{e}"))?;
+    let mut cmd = std::process::Command::new(&expanded);
+    hide_command_window(cmd.arg("version"));
+    let out = cmd.output().map_err(|e| format!("无法执行：{e}"))?;
     if !out.status.success() {
         return Err("路径有效但执行 hermes version 失败，请确认是正确的 hermes 二进制".to_string());
     }

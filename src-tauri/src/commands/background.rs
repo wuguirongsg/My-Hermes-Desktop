@@ -81,9 +81,9 @@ fn kill_pid(pid: u32) {
 
 #[cfg(windows)]
 fn kill_pid(pid: u32) {
-    let _ = Command::new("taskkill")
-        .args(["/PID", &pid.to_string(), "/F"])
-        .status();
+    let mut cmd = Command::new("taskkill");
+    crate::commands::sessions::hide_command_window(cmd.args(["/PID", &pid.to_string(), "/F"]));
+    let _ = cmd.status();
 }
 
 #[tauri::command]

@@ -14,8 +14,8 @@ fn append_tui_args(cmd: &mut CommandBuilder, session_id: Option<&str>) {
 
 #[cfg(target_os = "windows")]
 fn build_wsl_tui_command(wsl_hermes_path: &str, session_id: Option<&str>) -> CommandBuilder {
-    let mut cmd = CommandBuilder::new("wsl.exe");
-    cmd.arg(wsl_hermes_path);
+    let mut cmd = CommandBuilder::new("cmd.exe");
+    cmd.args(["/D", "/Q", "/C", "wsl.exe", wsl_hermes_path]);
     append_tui_args(&mut cmd, session_id);
     cmd
 }
@@ -157,8 +157,12 @@ mod tests {
         let cmd = build_wsl_tui_command("/home/me/.local/bin/hermes", Some("session-123"));
         let argv = cmd.get_argv();
 
-        assert_eq!(argv[0], OsStr::new("wsl.exe"));
-        assert_eq!(argv[1], OsStr::new("/home/me/.local/bin/hermes"));
+        assert_eq!(argv[0], OsStr::new("cmd.exe"));
+        assert!(argv.iter().any(|arg| arg == OsStr::new("/C")));
+        assert!(argv.iter().any(|arg| arg == OsStr::new("wsl.exe")));
+        assert!(argv
+            .iter()
+            .any(|arg| arg == OsStr::new("/home/me/.local/bin/hermes")));
         assert_eq!(
             argv.iter().filter(|arg| *arg == OsStr::new("chat")).count(),
             1

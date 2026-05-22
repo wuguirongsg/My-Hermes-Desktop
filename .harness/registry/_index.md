@@ -119,6 +119,8 @@
 
 <!-- 新条目追加到这里（上方） -->
 
+[2026-05-22 15:46] FIX Windows 打包版点击 UI 弹出 wsl.exe 终端窗口 — 后台 Command 加 CREATE_NO_WINDOW；内嵌 Terminal 的 WSL PTY 改经 cmd.exe /D /Q /C 进入伪控制台
+
 [2026-05-22 14:25] FIX 回复终端面板延迟出现 — 提交后立即显示本地 streaming 终端占位；Rust 启动前后发 raw 状态并消费 stderr，避免等待 Hermes 第一条 stdout
 
 [2026-05-15 18:00] DONE feat-109 图片/附件输入 — 拖拽/粘贴截图 → dataURL → Rust 写 ~/Library/Caches/hermes-desktop/images/ + --image；get_session_history 后处理 [Image attached at] 占位符还原为 image block；tauri.conf dragDropEnabled=false 释放 webview 拖放事件 → commit bafbcf4
