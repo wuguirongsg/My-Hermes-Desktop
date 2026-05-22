@@ -126,6 +126,8 @@ export default function ChatView({
   currentModel = null,
 }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const wasAtBottomRef = useRef(true);
 
   // 识别 hermes 错误类型，返回结构化描述；无法识别则返回 null
   function parseErrorCard(msg: string | null): { title: string; desc: string; dashboard?: string } | null {
@@ -310,10 +312,19 @@ export default function ChatView({
   // longTask: heuristic — more than 6 user messages in this session
   const longTask = messages.filter((m) => m.role === "user").length >= 6;
 
-  // Auto-scroll to bottom
+  // Sticky scroll: instantly follow output if user was already at the bottom.
+  // Tracks position before the messages state change via onScroll.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (wasAtBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    }
   }, [messages]);
+
+  const handleMessagesScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    wasAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  };
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -592,7 +603,7 @@ export default function ChatView({
           </div>
         </div>
       ) : (
-        <div className="chat-messages">
+        <div className="chat-messages" ref={scrollContainerRef} onScroll={handleMessagesScroll}>
           {messages.map((msg, idx) => (
             <MessageBubble
               key={msg.id}

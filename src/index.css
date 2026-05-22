@@ -1893,14 +1893,13 @@ body {
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  opacity: 0;
-  pointer-events: none;
+  opacity: 0.35;
+  pointer-events: auto;
   transition: opacity 0.12s;
 }
 .message-group:hover .message-actions,
 .message-actions:focus-within {
   opacity: 1;
-  pointer-events: auto;
 }
 .message-action-btn {
   height: 24px;

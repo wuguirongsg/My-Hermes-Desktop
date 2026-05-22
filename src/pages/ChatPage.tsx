@@ -108,6 +108,17 @@ function parseHistoryMessages(raw: unknown): Message[] {
   return messages;
 }
 
+function parseTokenCount(s: string): number {
+  const m = s.match(/^([\d.]+)([KMB]?)$/i);
+  if (!m) return 0;
+  const n = parseFloat(m[1]);
+  switch (m[2].toUpperCase()) {
+    case "K": return n * 1_000;
+    case "M": return n * 1_000_000;
+    default:  return n;
+  }
+}
+
 function parseStatusLine(line: string): Partial<HermesStatus> | null {
   const parts = line.split(/[│|]/).map((s) => s.trim()).filter(Boolean);
   if (parts.length < 2) return null;
@@ -185,6 +196,13 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
   const streaming = activeSessionId ? streamingSessions.has(activeSessionId) : false;
   const status = activeSessionId ? (sessionStatus[activeSessionId] ?? null) : null;
   const error = activeSessionId ? (sessionErrors[activeSessionId] ?? null) : null;
+
+  const contextPct = useMemo(() => {
+    if (!status?.tokensUsed || !status?.tokensMax) return undefined;
+    const used = parseTokenCount(status.tokensUsed);
+    const max  = parseTokenCount(status.tokensMax);
+    return max > 0 ? Math.min(1, used / max) : undefined;
+  }, [status?.tokensUsed, status?.tokensMax]);
 
   const tokenDisplay = useMemo((): { input: string; output: string } | null => {
     const msgs = activeSessionId ? (sessionMessages[activeSessionId] ?? []) : [];
@@ -1158,6 +1176,8 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
           pendingInputAppend={pendingInputAppend}
           workingDir={workingDir}
           showTools={showTools}
+          contextPct={contextPct}
+          onCompress={() => handleSendMessage("/compress")}
         />
       </div>
     </div>
