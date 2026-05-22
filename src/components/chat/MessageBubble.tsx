@@ -283,9 +283,11 @@ export default function MessageBubble({ message, isLastAssistant, streaming, sho
   const groundingBtnRef = useRef<HTMLButtonElement>(null);
   const isUser = message.role === "user";
 
-  // 隐藏工具时，纯工具消息整条不渲染
-  if (!showTools && message.blocks.every((b) => b.type === "tool")) return null;
   const isStreaming = isLastAssistant && message.status === "streaming";
+  const isLiveTerminal = !isUser && (isStreaming || message.status === "error");
+  const isPureToolMessage = message.blocks.length > 0 && message.blocks.every((b) => b.type === "tool");
+  // 隐藏工具时，只隐藏已完成的纯工具消息；live terminal 占位和错误输出必须保留。
+  if (!showTools && isPureToolMessage && !isLiveTerminal) return null;
   const showCopy = !isUser && !isStreaming && message.status === "done";
   const showRetry = isLastAssistant && !streaming && message.status === "done";
 
@@ -348,9 +350,7 @@ export default function MessageBubble({ message, isLastAssistant, streaming, sho
   }
 
   const hasContent = message.blocks.length > 0;
-  const showTerminal =
-    !isUser &&
-    (isStreaming || message.status === "error");
+  const showTerminal = isLiveTerminal;
 
   return (
     <div className="message-group fade-in">
