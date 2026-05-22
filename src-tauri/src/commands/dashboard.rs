@@ -3,7 +3,7 @@ use std::io::Read;
 use std::net::TcpStream;
 use std::process::Stdio;
 use std::time::{Duration, Instant};
-use tauri::State;
+use tauri::{Manager, State};
 
 const DASHBOARD_PORT: u16 = 9119;
 const READY_TIMEOUT_SECS: u64 = 12;
@@ -132,6 +132,78 @@ pub fn dashboard_status(state: State<'_, AppState>) -> String {
             Err(_) => "unknown".to_string(),
         },
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dashboard_error_explains_missing_web_build_tools() {
+        let msg = normalize_dashboard_error("Web UI frontend not built and npm is not available.");
+
+        assert!(msg.contains("dashboard_dependency_missing:"));
+        assert!(msg.contains("WSL"));
+        assert!(msg.contains("npm"));
+        assert!(msg.contains("cd ~/.hermes/hermes-agent/web"));
+    }
+
+    #[test]
+    fn dashboard_error_keeps_unknown_stderr() {
+        let msg = normalize_dashboard_error("some other failure");
+
+        assert_eq!(msg, "dashboard_failed:some other failure");
+    }
+
+    #[test]
+    fn dashboard_args_skip_build_for_desktop_embedding() {
+        assert!(dashboard_args().iter().any(|arg| arg == "--skip-build"));
+    }
+}
+
+// ─── Dashboard theme installer ───────────────────────────────────────────────
+
+/// Install bundled dashboard themes and the desktop-theme-sync plugin into
+/// ~/.hermes/ so the embedded dashboard can load them as user themes.
+#[tauri::command]
+pub async fn install_dashboard_themes(app_handle: tauri::AppHandle) -> Result<bool, String> {
+    let resource_dir = app_handle
+        .path()
+        .resource_dir()
+        .map_err(|e| format!("resource_dir:{e}"))?;
+    let home = dirs::home_dir().ok_or("Cannot determine home directory")?;
+    let hermes_home = home.join(".hermes");
+
+    // Source paths inside the app bundle
+    let themes_src = resource_dir.join("dashboard-themes");
+    let plugin_src = resource_dir.join("dashboard-plugins/desktop-theme-sync/dashboard");
+
+    // Destination paths in the user's home
+    let themes_dst = hermes_home.join("dashboard-themes");
+    let plugin_dst = hermes_home.join("plugins/desktop-theme-sync/dashboard");
+
+    std::fs::create_dir_all(&themes_dst).map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&plugin_dst).map_err(|e| e.to_string())?;
+
+    let theme_files = ["claude.yaml", "apple.yaml", "warp.yaml"];
+    for file in &theme_files {
+        let src = themes_src.join(file);
+        let dst = themes_dst.join(file);
+        if src.exists() {
+            std::fs::copy(&src, &dst).map_err(|e| e.to_string())?;
+        }
+    }
+
+    let plugin_files = ["manifest.json", "index.js"];
+    for file in &plugin_files {
+        let src = plugin_src.join(file);
+        let dst = plugin_dst.join(file);
+        if src.exists() {
+            std::fs::copy(&src, &dst).map_err(|e| e.to_string())?;
+        }
+    }
+
+    Ok(true)
 }
 
 #[cfg(test)]

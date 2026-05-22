@@ -2,7 +2,7 @@
   "_readme": "只允许把 passes 从 false 改成 true。禁止删除条目或修改 description。违反视为严重错误。",
   "_project": "hermes-desktop",
   "_sprint": "Phase 2 — macOS 原生感",
-  "_updated": "2026-05-19",
+  "_updated": "2026-05-22",
   "features": [
     {
       "id": "feat-000",
@@ -120,7 +120,7 @@
       "description": "斜杠命令菜单 — 输入框输入 / 时浮出命令选择菜单；按命令名实时过滤；↑↓ 键盘导航，Enter 选中，Esc 关闭；无参命令直接发送，有参命令填入输入框等用户补填；菜单按会话/上下文/目标任务/快照分组展示",
       "acceptance": "输入框输入 / 后弹出命令菜单；继续输入可过滤命令；键盘和鼠标均可选择；选中无参命令直接发送；选中有参命令填入输入框并定位光标；Esc 关闭；菜单内容覆盖主要 hermes 命令并分组",
       "depends_on": [],
-      "passes": false
+      "passes": true
     },
     {
       "id": "feat-208",

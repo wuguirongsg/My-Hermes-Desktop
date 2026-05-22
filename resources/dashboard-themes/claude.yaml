@@ -1,0 +1,42 @@
+name: claude
+label: Claude
+description: Warm paper — matches the Hermes Desktop Claude theme
+palette:
+  background: "#faf9f5"
+  midground: "#141413"
+  foreground:
+    hex: "#ffffff"
+    alpha: 0
+  warmGlow: "rgba(204, 120, 92, 0.08)"
+  noiseOpacity: 0.3
+typography:
+  fontSans: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+  fontMono: "'JetBrains Mono', ui-monospace, monospace"
+  fontDisplay: "'Cormorant Garamond', 'Tiempos Headline', Georgia, serif"
+  fontUrl: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+  baseSize: "15px"
+  lineHeight: "1.55"
+  letterSpacing: "0"
+layout:
+  radius: "8px"
+  density: comfortable
+colorOverrides:
+  card: "#f5f0e8"
+  cardForeground: "#141413"
+  popover: "#faf9f5"
+  popoverForeground: "#141413"
+  primary: "#cc785c"
+  primaryForeground: "#faf9f5"
+  secondary: "#e8e0d2"
+  secondaryForeground: "#3d3d3a"
+  muted: "#f5f0e8"
+  mutedForeground: "#6c6a64"
+  accent: "#efe9de"
+  accentForeground: "#141413"
+  destructive: "#c64545"
+  destructiveForeground: "#ffffff"
+  success: "#5db872"
+  warning: "#d4a017"
+  border: "#e6dfd8"
+  input: "#e6dfd8"
+  ring: "#cc785c"

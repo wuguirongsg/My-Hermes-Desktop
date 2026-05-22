@@ -1,0 +1,41 @@
+name: apple
+label: Apple
+description: Clean system white — matches the Hermes Desktop Apple theme
+palette:
+  background: "#ffffff"
+  midground: "#1d1d1f"
+  foreground:
+    hex: "#ffffff"
+    alpha: 0
+  warmGlow: "rgba(0, 102, 204, 0.06)"
+  noiseOpacity: 0.2
+typography:
+  fontSans: "-apple-system, 'SF Pro Text', system-ui, sans-serif"
+  fontMono: "ui-monospace, 'SF Mono', 'Menlo', monospace"
+  fontDisplay: "-apple-system, 'SF Pro Display', system-ui, sans-serif"
+  baseSize: "15px"
+  lineHeight: "1.55"
+  letterSpacing: "0"
+layout:
+  radius: "8px"
+  density: comfortable
+colorOverrides:
+  card: "#f5f5f7"
+  cardForeground: "#1d1d1f"
+  popover: "#ffffff"
+  popoverForeground: "#1d1d1f"
+  primary: "#0066cc"
+  primaryForeground: "#ffffff"
+  secondary: "#e8e8ed"
+  secondaryForeground: "#1d1d1f"
+  muted: "#f5f5f7"
+  mutedForeground: "#7a7a7a"
+  accent: "#f5f5f7"
+  accentForeground: "#1d1d1f"
+  destructive: "#c64545"
+  destructiveForeground: "#ffffff"
+  success: "#30b0c7"
+  warning: "#ff9f0a"
+  border: "#e0e0e0"
+  input: "#e0e0e0"
+  ring: "#0066cc"

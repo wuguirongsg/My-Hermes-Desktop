@@ -3081,6 +3081,30 @@ body {
   gap: 16px;
 }
 
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.settings-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-row-label > span:first-child {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.settings-row-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
 .settings-primary-btn {
   height: 34px;
   padding: 0 13px;

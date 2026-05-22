@@ -354,6 +354,7 @@ pub fn run() {
             commands::dashboard::dashboard_start,
             commands::dashboard::dashboard_stop,
             commands::dashboard::dashboard_status,
+            commands::dashboard::install_dashboard_themes,
             commands::terminal::pty_open,
             commands::terminal::pty_write,
             commands::terminal::pty_resize,

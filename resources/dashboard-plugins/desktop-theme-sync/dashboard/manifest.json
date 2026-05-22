@@ -1,0 +1,14 @@
+{
+  "name": "desktop-theme-sync",
+  "label": "Desktop Theme Sync",
+  "description": "Syncs theme from Hermes Desktop via postMessage",
+  "icon": "palette",
+  "version": "1.0.0",
+  "tab": {
+    "path": "",
+    "hidden": true
+  },
+  "entry": "index.js",
+  "has_api": false,
+  "source": "hermes-desktop"
+}

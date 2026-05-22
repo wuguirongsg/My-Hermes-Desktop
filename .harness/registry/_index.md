@@ -4,6 +4,12 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-22 DECISION] feat-204 毛玻璃+主题深度打磨正式取消 — 测试效果不满意，成本高于收益；backlog.md 已记录；features.json 条目保留 passes=false
+
+[2026-05-22 DONE] feat-207 斜杠命令菜单 passes=true — SlashCommandMenu.tsx 已实现完整：15 条命令/5 分组/键盘导航/实时过滤/directSend，代码审查确认满足全部验收标准
+
+[2026-05-22 DECISION] feat-208 分支会话暂不做 — 仅有 /branch 菜单入口，无 Sidebar 分支关系 UI 和专属处理逻辑；实现成本较高，待后续规划
+
 [2026-05-22 POSTMORTEM] 回复终端延迟显示复盘 — 根因是 showTools 关闭时 `blocks.every(tool)` 误把空 streaming 占位当纯工具消息隐藏；沉淀排查顺序与代码规则 → docs/design/2026-05-22-terminal-visibility-postmortem.md
 
 [2026-05-22 FIX] 粘性滚动替换 smooth scroll 解决终端框慢出现 + 消息操作常驻低透明 + contextPct 接通 GuideBot
