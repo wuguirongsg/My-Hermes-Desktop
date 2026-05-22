@@ -205,6 +205,8 @@ pub async fn send_message(
     working_dir: Option<String>,
     skills: Option<Vec<String>>,
 ) -> Result<(), String> {
+    emit(&app, &session_tag, "raw", "Starting Hermes desktop bridge...");
+
     // No -Q: non-quiet mode streams output token-by-token as the model generates.
     // PYTHONUNBUFFERED=1 ensures Python flushes stdout on each write.
     let mut args: Vec<String> = vec!["chat".into(), "-q".into(), message.clone()];
@@ -255,11 +257,27 @@ pub async fn send_message(
         .map_err(|e| format!("Failed to start hermes: {e}. Is hermes installed and in PATH?"))?;
 
     let stdout = child.stdout.take().ok_or("No stdout")?;
+    let stderr = child.stderr.take();
+    emit(&app, &session_tag, "raw", "Hermes process started. Waiting for output...");
 
     // Store child for kill_session to use
     {
         let mut map = state.chat_processes.lock().unwrap();
         map.insert(session_tag.clone(), child);
+    }
+
+    if let Some(stderr) = stderr {
+        let app_for_stderr = app.clone();
+        let session_for_stderr = session_tag.clone();
+        std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().map_while(Result::ok) {
+                let clean = strip_ansi(&line);
+                if !clean.trim().is_empty() {
+                    emit(&app_for_stderr, &session_for_stderr, "raw", &clean);
+                }
+            }
+        });
     }
 
     let reader = BufReader::new(stdout);

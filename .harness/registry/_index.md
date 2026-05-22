@@ -117,6 +117,8 @@
 
 <!-- 新条目追加到这里（上方） -->
 
+[2026-05-22 14:25] FIX 回复终端面板延迟出现 — 提交后立即显示本地 streaming 终端占位；Rust 启动前后发 raw 状态并消费 stderr，避免等待 Hermes 第一条 stdout
+
 [2026-05-15 18:00] DONE feat-109 图片/附件输入 — 拖拽/粘贴截图 → dataURL → Rust 写 ~/Library/Caches/hermes-desktop/images/ + --image；get_session_history 后处理 [Image attached at] 占位符还原为 image block；tauri.conf dragDropEnabled=false 释放 webview 拖放事件 → commit bafbcf4
 
 [2026-05-15 17:00] DECISION Phase 2 评估 — gateway 模式调研：Hermes CLI 自带 `hermes acp`（ACP server，stdio JSON-RPC）即天然 gateway。能解决进程启动慢/slash 命令不支持/双向中断三大痛点，但需重写 Rust 通信层 + 推翻"一次性进程"约束。决定先收 feat-109 → Phase 1 关闭 → 再做 1～2 天 ACP spike → 可行再开 Phase 2
