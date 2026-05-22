@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-22 FIX] Grounding 气泡改磨砂半透明背景（backdrop-filter blur），解决透明导致内容重叠视觉问题
+
 [2026-05-22 FIX] GoalBar 无目标时隐藏 + TopBar 目标按钮 + Grounding 气泡改 portal 修层级
 
 [2026-05-22 BUILD] DONE feat-211/212/213 — 隐式上下文 info 条 + 后台步骤时间线 + Grounding 气泡，9 文件已提交
