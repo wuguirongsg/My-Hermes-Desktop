@@ -40,6 +40,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "../resources/dashboard-themes": "dashboard-themes",
+      "../resources/dashboard-plugins": "dashboard-plugins"
+    },
     "macOS": {
       "infoPlist": "Info.plist"
     }

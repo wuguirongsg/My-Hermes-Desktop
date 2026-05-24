@@ -96,6 +96,38 @@ export default function SettingsPage() {
         <section className="settings-section">
           <div className="settings-section-header">
             <div>
+              <h2 className="settings-section-title ui-font">Dashboard 主题</h2>
+              <p className="settings-section-desc">将 Dashboard 管理界面的主题与 Desktop 保持同步。</p>
+            </div>
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row-label">
+              <span className="ui-font">安装 Dashboard 主题包</span>
+              <span className="settings-row-desc">一键安装 Claude / Apple / Warp 三套主题及同步插件。</span>
+            </div>
+            <button
+              type="button"
+              className="settings-primary-btn ui-font"
+              onClick={async () => {
+                try {
+                  const { invoke } = await import("@tauri-apps/api/core");
+                  await invoke("install_dashboard_themes");
+                  alert("Dashboard 主题安装成功！下次打开 Dashboard 时会自动同步主题。");
+                } catch (e) {
+                  alert("安装失败：" + String(e));
+                }
+              }}
+            >
+              安装
+              <Icon name="package" size={15} />
+            </button>
+          </div>
+        </section>
+
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <div>
               <h2 className="settings-section-title ui-font">机器人形象</h2>
               <p className="settings-section-desc">选择输入区引导机器人的外观。</p>
             </div>

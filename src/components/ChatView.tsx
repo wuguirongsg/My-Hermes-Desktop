@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, KeyboardEvent, ClipboardEvent, DragEvent, useCallback } from "react";
 import { open as openFileDialog } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
 import { Message } from "../types";
 import Icon from "./Icon";
 import GuideBot from "./chat/GuideBot";
@@ -252,16 +251,11 @@ export default function ChatView({
     if (!selected) return;
     const paths = Array.isArray(selected) ? selected : [selected];
     for (const p of paths) {
-      try {
-        const dest = await invoke<string>("save_upload", { srcPath: p });
-        const name = dest.split("/").pop() ?? dest;
-        setAttachedFiles((prev) => {
-          if (prev.some((f) => f.path === dest)) return prev;
-          return [...prev, { name, path: dest }];
-        });
-      } catch (e) {
-        console.error("save_upload failed:", e);
-      }
+      const name = p.split("/").pop() ?? p;
+      setAttachedFiles((prev) => {
+        if (prev.some((f) => f.path === p)) return prev;
+        return [...prev, { name, path: p }];
+      });
     }
   };
 
@@ -420,10 +414,10 @@ export default function ChatView({
     const skillNames = skillRefs.map((r) => r.name);
 
     const fileAppend = fileRefs
-      .map((r) => `\n\n--- 文件: ${r.name} ---\n${r.content ?? "(内容不可用)"}`)
+      .map((r) => ` @${r.path}`)
       .join("");
     const uploadAppend = attachedFiles
-      .map((f) => `\n\n[附件: ${f.path}]`)
+      .map((f) => ` @${f.path}`)
       .join("");
     const payload = rawText + fileAppend + uploadAppend;
 

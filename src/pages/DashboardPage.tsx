@@ -1,17 +1,46 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import Icon from "../components/Icon";
+import { useTheme, type Theme } from "../hooks/useTheme";
 
 const DASHBOARD_URL = "http://127.0.0.1:9119";
 const INSTALL_CMD = "curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash";
 const DASHBOARD_BUILD_CMD = "cd ~/.hermes/hermes-agent/web && npm install && npm run build";
 
+/** Map Hermes Desktop theme names to Hermes Dashboard YAML theme names. */
+const DASHBOARD_THEME_MAP: Record<Theme, string> = {
+  claude: "claude",
+  apple:  "apple",
+  warp:   "warp",
+};
+
 type Status = "idle" | "starting" | "ready" | "error" | "missing";
 
 export default function DashboardPage() {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { theme } = useTheme();
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [copied, setCopied] = useState(false);
+  const lastSentRef = useRef<string | null>(null);
+
+  /** Send the current desktop theme to the dashboard iframe via postMessage. */
+  const syncTheme = useCallback((target: HTMLIFrameElement | null, t: Theme) => {
+    if (!target?.contentWindow) return;
+    const dashboardTheme = DASHBOARD_THEME_MAP[t];
+    if (!dashboardTheme) return;
+    if (lastSentRef.current === dashboardTheme) return; // avoid duplicates
+    lastSentRef.current = dashboardTheme;
+    target.contentWindow.postMessage(
+      { type: "hermes-theme-sync", desktopTheme: t, dashboardTheme },
+      DASHBOARD_URL,
+    );
+  }, []);
+
+  // Sync theme whenever it changes in the desktop app
+  useEffect(() => {
+    syncTheme(iframeRef.current, theme);
+  }, [theme, syncTheme]);
 
   const start = useCallback(async () => {
     setStatus("starting");
@@ -106,10 +135,12 @@ export default function DashboardPage() {
   // ── Ready: show iframe ──
   return (
     <iframe
+      ref={iframeRef}
       className="dashboard-iframe"
       src={DASHBOARD_URL}
       title="Hermes Dashboard"
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+      onLoad={() => syncTheme(iframeRef.current, theme)}
     />
   );
 }

@@ -90,31 +90,17 @@ export default function RefPickerPanel({ workingDir, onSelect, onClose, onAsk }:
     return idx > 0 ? currentPath.slice(0, idx) : null;
   })();
 
-  const handleFileClick = async (entry: FileEntry) => {
+  const handleFileClick = (entry: FileEntry) => {
     if (entry.is_dir) {
       setCurrentPath(entry.path);
       setSearch("");
     } else {
-      try {
-        const content = await invoke<string>("read_text_file", { path: entry.path });
-        onSelect({ type: "file", name: entry.name, path: entry.path, content });
-      } catch {
-        onSelect({ type: "file", name: entry.name, path: entry.path, content: "(无法读取)" });
-      }
+      onSelect({ type: "file", name: entry.name, path: entry.path });
     }
   };
 
-  const handleDirSelect = async (entry: FileEntry) => {
-    try {
-      const children = await invoke<FileEntry[]>("list_dir", { path: entry.path });
-      const lines = [`目录: ${entry.path}`, "文件列表："];
-      for (const c of children) {
-        lines.push(`  ${c.is_dir ? "📁 " + c.name + "/" : "📄 " + c.name}`);
-      }
-      onSelect({ type: "file", name: entry.name + "/", path: entry.path, content: lines.join("\n") });
-    } catch {
-      onSelect({ type: "file", name: entry.name + "/", path: entry.path, content: `目录: ${entry.path}` });
-    }
+  const handleDirSelect = (entry: FileEntry) => {
+    onSelect({ type: "file", name: entry.name + "/", path: entry.path });
   };
 
   const handleSkillClick = (skill: SkillInfo) => {

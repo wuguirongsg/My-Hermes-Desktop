@@ -1,0 +1,42 @@
+name: warp
+label: Warp
+description: Warm dark canvas — matches the Hermes Desktop Warp theme
+palette:
+  background: "#2b2622"
+  midground: "#f7f5f0"
+  foreground:
+    hex: "#f7f5f0"
+    alpha: 0
+  warmGlow: "rgba(247, 245, 240, 0.06)"
+  noiseOpacity: 0.5
+typography:
+  fontSans: "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  fontMono: "'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace"
+  fontDisplay: "'Instrument Serif', Georgia, 'Times New Roman', serif"
+  fontUrl: "https://fonts.googleapis.com/css2?family=Instrument+Serif:wght@400&family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+  baseSize: "15px"
+  lineHeight: "1.55"
+  letterSpacing: "-0.005em"
+layout:
+  radius: "4px"
+  density: comfortable
+colorOverrides:
+  card: "#383330"
+  cardForeground: "#f7f5f0"
+  popover: "#383330"
+  popoverForeground: "#f7f5f0"
+  primary: "#f7f5f0"
+  primaryForeground: "#2b2622"
+  secondary: "#3f3a36"
+  secondaryForeground: "#c9c0ad"
+  muted: "#302c28"
+  mutedForeground: "#aea69c"
+  accent: "#403c38"
+  accentForeground: "#f7f5f0"
+  destructive: "#c64545"
+  destructiveForeground: "#f7f5f0"
+  success: "#5db8a6"
+  warning: "#e8a55a"
+  border: "#3f3a36"
+  input: "#3f3a36"
+  ring: "#f7f5f0"
