@@ -2,9 +2,9 @@
 name = "hermes-desktop"
 version = "0.1.0"
 description = "A beautiful desktop UI for Hermes Agent"
-authors = []
-license = ""
-repository = ""
+authors = ["吴桂荣 <wuguirong@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://gitee.com/wuguirong/hermes-desktop"
 edition = "2021"
 
 [lib]

@@ -198,3 +198,5 @@
 [2026-05-12 10:00] DECISION 项目 harness 初始化完成，Phase 0 四个功能录入 features.json → decisions/init.md
 
 [2026-05-25] FIX 修复双击标题栏无法最大化窗口：AppTitleBar.tsx 补 onDoubleClick → toggleMaximize()
+
+[2026-05-25] DONE 开源发布准备 — 补齐 Cargo.toml 元数据、重写 README（对齐真实组件结构）、新增 CONTRIBUTING.md、.github/ Issue/PR 模板和 CI 工作流
