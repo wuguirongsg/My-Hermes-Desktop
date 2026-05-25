@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-25 15:57] FIX README 增加界面预览截图区，引用 screenshot 下 4 张应用截图
+
 [2026-05-25 FIX] 文件预览区 Windows 下无法选文本 — body 全局 user-select:none，WebView2 严格执行致选区始终 collapsed；FileTreePanel previewRef 加 userSelect:"text" 覆盖修复
 
 [2026-05-22 DECISION] feat-204 毛玻璃+主题深度打磨正式取消 — 测试效果不满意，成本高于收益；backlog.md 已记录；features.json 条目保留 passes=false
