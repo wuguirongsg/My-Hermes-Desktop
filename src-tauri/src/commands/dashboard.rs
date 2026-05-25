@@ -5,6 +5,26 @@ use std::process::Stdio;
 use std::time::{Duration, Instant};
 use tauri::{Manager, State};
 
+// ─── Dashboard theme installer types ─────────────────────────────────────────
+
+#[derive(serde::Serialize)]
+pub struct DashboardThemeInstallResult {
+    pub themes_installed: Vec<String>,
+    pub plugin_files_installed: Vec<String>,
+    pub themes_dir: String,
+    pub plugin_dir: String,
+    pub skipped: Vec<String>,
+}
+
+#[derive(serde::Serialize)]
+pub struct DashboardThemeInstallStatus {
+    pub themes: Vec<String>,
+    pub plugin_files: Vec<String>,
+    pub themes_dir: String,
+    pub plugin_dir: String,
+    pub installed: bool,
+}
+
 const DASHBOARD_PORT: u16 = 9119;
 const READY_TIMEOUT_SECS: u64 = 12;
 
@@ -166,7 +186,9 @@ mod tests {
 /// Install bundled dashboard themes and the desktop-theme-sync plugin into
 /// ~/.hermes/ so the embedded dashboard can load them as user themes.
 #[tauri::command]
-pub async fn install_dashboard_themes(app_handle: tauri::AppHandle) -> Result<bool, String> {
+pub async fn install_dashboard_themes(
+    app_handle: tauri::AppHandle,
+) -> Result<DashboardThemeInstallResult, String> {
     let resource_dir = app_handle
         .path()
         .resource_dir()
@@ -185,50 +207,79 @@ pub async fn install_dashboard_themes(app_handle: tauri::AppHandle) -> Result<bo
     std::fs::create_dir_all(&themes_dst).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&plugin_dst).map_err(|e| e.to_string())?;
 
+    let mut themes_installed = Vec::new();
+    let mut skipped = Vec::new();
+
     let theme_files = ["claude.yaml", "apple.yaml", "warp.yaml"];
     for file in &theme_files {
         let src = themes_src.join(file);
         let dst = themes_dst.join(file);
         if src.exists() {
             std::fs::copy(&src, &dst).map_err(|e| e.to_string())?;
+            themes_installed.push(file.to_string());
+        } else {
+            skipped.push(format!("theme:{file}"));
         }
     }
 
+    let mut plugin_files_installed = Vec::new();
     let plugin_files = ["manifest.json", "index.js"];
     for file in &plugin_files {
         let src = plugin_src.join(file);
         let dst = plugin_dst.join(file);
         if src.exists() {
             std::fs::copy(&src, &dst).map_err(|e| e.to_string())?;
+            plugin_files_installed.push(file.to_string());
+        } else {
+            skipped.push(format!("plugin:{file}"));
         }
     }
 
-    Ok(true)
+    Ok(DashboardThemeInstallResult {
+        themes_installed,
+        plugin_files_installed,
+        themes_dir: themes_dst.to_string_lossy().into_owned(),
+        plugin_dir: plugin_dst.to_string_lossy().into_owned(),
+        skipped,
+    })
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+/// Query what dashboard themes and plugin files are currently installed.
+#[tauri::command]
+pub fn get_dashboard_theme_install_status() -> Result<DashboardThemeInstallStatus, String> {
+    let home = dirs::home_dir().ok_or("Cannot determine home directory")?;
+    let hermes_home = home.join(".hermes");
+    let themes_dir = hermes_home.join("dashboard-themes");
+    let plugin_dir = hermes_home.join("plugins/desktop-theme-sync/dashboard");
 
-    #[test]
-    fn dashboard_error_explains_missing_web_build_tools() {
-        let msg = normalize_dashboard_error("Web UI frontend not built and npm is not available.");
+    let mut themes = Vec::new();
+    let mut plugin_files = Vec::new();
 
-        assert!(msg.contains("dashboard_dependency_missing:"));
-        assert!(msg.contains("WSL"));
-        assert!(msg.contains("npm"));
-        assert!(msg.contains("cd ~/.hermes/hermes-agent/web"));
+    if themes_dir.is_dir() {
+        for entry in std::fs::read_dir(&themes_dir).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if name.ends_with(".yaml") || name.ends_with(".yml") {
+                themes.push(name);
+            }
+        }
     }
 
-    #[test]
-    fn dashboard_error_keeps_unknown_stderr() {
-        let msg = normalize_dashboard_error("some other failure");
-
-        assert_eq!(msg, "dashboard_failed:some other failure");
+    if plugin_dir.is_dir() {
+        for entry in std::fs::read_dir(&plugin_dir).map_err(|e| e.to_string())? {
+            let entry = entry.map_err(|e| e.to_string())?;
+            let name = entry.file_name().to_string_lossy().into_owned();
+            plugin_files.push(name);
+        }
     }
 
-    #[test]
-    fn dashboard_args_skip_build_for_desktop_embedding() {
-        assert!(dashboard_args().iter().any(|arg| arg == "--skip-build"));
-    }
+    let installed = !themes.is_empty() && !plugin_files.is_empty();
+
+    Ok(DashboardThemeInstallStatus {
+        themes,
+        plugin_files,
+        themes_dir: themes_dir.to_string_lossy().into_owned(),
+        plugin_dir: plugin_dir.to_string_lossy().into_owned(),
+        installed,
+    })
 }

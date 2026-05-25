@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import Icon from "../components/Icon";
 import {
   GUIDE_BOT_APPEARANCES,
@@ -37,6 +38,183 @@ const APPEARANCE_MOOD: Record<GuideBotAppearance, Parameters<typeof GuideBotAvat
   cyber: "alert",
   pod: "heartbeat",
 };
+
+// ─── Dashboard Theme Installer sub-component ─────────────────────────────────
+
+interface InstallResult {
+  themes_installed: string[];
+  plugin_files_installed: string[];
+  themes_dir: string;
+  plugin_dir: string;
+  skipped: string[];
+}
+
+interface InstallStatus {
+  themes: string[];
+  plugin_files: string[];
+  themes_dir: string;
+  plugin_dir: string;
+  installed: boolean;
+}
+
+function DashboardThemeInstaller() {
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [installResult, setInstallResult] = useState<InstallResult | null>(null);
+  const [installError, setInstallError] = useState<string | null>(null);
+  const [status, setStatus] = useState<InstallStatus | null>(null);
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const result = await invoke<InstallStatus>("get_dashboard_theme_install_status");
+      setStatus(result);
+    } catch {
+      // silently ignore — the user can still install
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
+
+  const handleInstall = async () => {
+    setIsInstalling(true);
+    setInstallResult(null);
+    setInstallError(null);
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const result = await invoke<InstallResult>("install_dashboard_themes");
+      setInstallResult(result);
+      await loadStatus();
+    } catch (e) {
+      setInstallError(String(e));
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
+  return (
+    <div className="dashboard-theme-installer">
+      <div className="settings-row">
+        <div className="settings-row-label">
+          <span className="ui-font">安装 Dashboard 主题包</span>
+          <span className="settings-row-desc">
+            一键安装 Claude / Apple / Warp 三套主题及同步插件到 ~/.hermes/
+          </span>
+        </div>
+        <button
+          type="button"
+          className="settings-primary-btn ui-font"
+          disabled={isInstalling}
+          onClick={handleInstall}
+        >
+          {isInstalling ? (
+            <>
+              <span className="btn-spinner" />
+              安装中…
+            </>
+          ) : status?.installed ? (
+            <>
+              重新安装
+              <Icon name="refresh" size={15} />
+            </>
+          ) : (
+            <>
+              安装
+              <Icon name="package" size={15} />
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Install result banner */}
+      {installError && (
+        <div className="install-result-card install-error">
+          <Icon name="alert" size={16} />
+          <span>安装失败：{installError}</span>
+        </div>
+      )}
+      {installResult && (
+        <div className="install-result-card install-success">
+          <div className="install-result-header">
+            <Icon name="check" size={16} />
+            <span>安装成功</span>
+          </div>
+          <div className="install-result-body">
+            {installResult.themes_installed.length > 0 && (
+              <div className="install-result-group">
+                <span className="install-result-label">主题文件</span>
+                <ul className="install-result-list">
+                  {installResult.themes_installed.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+                <span className="install-result-path">{installResult.themes_dir}</span>
+              </div>
+            )}
+            {installResult.plugin_files_installed.length > 0 && (
+              <div className="install-result-group">
+                <span className="install-result-label">插件文件</span>
+                <ul className="install-result-list">
+                  {installResult.plugin_files_installed.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+                <span className="install-result-path">{installResult.plugin_dir}</span>
+              </div>
+            )}
+            {installResult.skipped.length > 0 && (
+              <div className="install-result-group">
+                <span className="install-result-label">跳过（源文件缺失）</span>
+                <ul className="install-result-list">
+                  {installResult.skipped.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Current installed status */}
+      {status && (
+        <div className="install-status-block">
+          <div className="install-status-header">
+            <Icon name="package" size={14} />
+            <span className="ui-font">
+              {status.installed ? "已安装内容" : "尚未安装"}
+            </span>
+          </div>
+          {status.installed && (
+            <div className="install-status-body">
+              {status.themes.length > 0 && (
+                <div className="install-status-group">
+                  <span className="install-status-label">主题</span>
+                  <div className="install-status-tags">
+                    {status.themes.map((t) => (
+                      <span key={t} className="install-status-tag">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {status.plugin_files.length > 0 && (
+                <div className="install-status-group">
+                  <span className="install-status-label">插件</span>
+                  <div className="install-status-tags">
+                    {status.plugin_files.map((f) => (
+                      <span key={f} className="install-status-tag">{f}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const navigate = useNavigate();
@@ -101,28 +279,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="settings-row">
-            <div className="settings-row-label">
-              <span className="ui-font">安装 Dashboard 主题包</span>
-              <span className="settings-row-desc">一键安装 Claude / Apple / Warp 三套主题及同步插件。</span>
-            </div>
-            <button
-              type="button"
-              className="settings-primary-btn ui-font"
-              onClick={async () => {
-                try {
-                  const { invoke } = await import("@tauri-apps/api/core");
-                  await invoke("install_dashboard_themes");
-                  alert("Dashboard 主题安装成功！下次打开 Dashboard 时会自动同步主题。");
-                } catch (e) {
-                  alert("安装失败：" + String(e));
-                }
-              }}
-            >
-              安装
-              <Icon name="package" size={15} />
-            </button>
-          </div>
+          <DashboardThemeInstaller />
         </section>
 
         <section className="settings-section">

@@ -3139,6 +3139,168 @@ body {
   letter-spacing: 0.01em;
 }
 
+/* ── Dashboard Theme Installer ── */
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-theme-installer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.install-result-card {
+  margin: 4px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: fade-in 0.25s ease;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.install-result-card.install-success {
+  background: rgba(93, 184, 114, 0.10);
+  border: 1px solid rgba(93, 184, 114, 0.25);
+  color: var(--body);
+}
+
+.install-result-card.install-error {
+  background: rgba(198, 69, 69, 0.10);
+  border: 1px solid rgba(198, 69, 69, 0.25);
+  color: var(--error);
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.install-result-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  color: var(--success);
+  font-size: 13px;
+}
+
+.install-result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 2px;
+}
+
+.install-result-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.install-result-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.install-result-list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+}
+
+.install-result-list li {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--body);
+}
+
+.install-result-path {
+  font-size: 11px;
+  color: var(--muted-soft);
+  font-family: var(--font-mono);
+}
+
+.install-status-block {
+  margin: 4px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+  border: 1px solid var(--hairline);
+  animation: fade-in 0.25s ease;
+}
+
+.install-status-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--body-strong);
+  margin-bottom: 8px;
+}
+
+.install-status-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.install-status-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.install-status-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  min-width: 38px;
+}
+
+.install-status-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.install-status-tag {
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--body);
+}
+
 @media (max-width: 1060px) {
   .bot-appearance-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
