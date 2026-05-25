@@ -340,6 +340,7 @@ pub fn run() {
             commands::sessions::rename_session,
             commands::sessions::undo_last_turn,
             commands::sessions::set_hermes_path,
+            commands::sessions::fork_session,
             commands::chat::send_message,
             commands::chat::list_skills,
             commands::chat::kill_session,

@@ -777,6 +777,69 @@ pub async fn delete_session(session_id: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+pub async fn fork_session(
+    session_id: String,
+    branch_name: Option<String>,
+) -> Result<String, String> {
+    let home = hermes_home().ok_or("Cannot find home dir")?;
+    let sessions_dir = home.join("sessions");
+
+    // Find the source session file
+    let src_path = session_file_candidates(&session_id)?
+        .into_iter()
+        .find(|p| p.exists())
+        .ok_or_else(|| format!("Session file not found for id: {session_id}"))?;
+
+    // Generate a unique branch ID from current timestamp (ms + subsec ns for uniqueness)
+    let d = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default();
+    let new_id = format!("branch-{:x}{:03x}", d.as_secs(), d.subsec_millis());
+
+    let is_jsonl = src_path.extension().map_or(false, |e| e == "jsonl");
+    let dest_path = sessions_dir.join(if is_jsonl {
+        format!("{new_id}.jsonl")
+    } else {
+        format!("{new_id}.json")
+    });
+
+    if is_jsonl {
+        std::fs::copy(&src_path, &dest_path).map_err(|e| e.to_string())?;
+    } else {
+        let content = std::fs::read_to_string(&src_path).map_err(|e| e.to_string())?;
+        let mut value: serde_json::Value =
+            serde_json::from_str(&content).map_err(|e| e.to_string())?;
+        if let serde_json::Value::Object(ref mut map) = value {
+            map.insert(
+                "session_id".into(),
+                serde_json::Value::String(new_id.clone()),
+            );
+            map.insert(
+                "last_updated".into(),
+                serde_json::Value::String(chrono::Local::now().naive_local().to_string()),
+            );
+        }
+        let new_content =
+            serde_json::to_string_pretty(&value).map_err(|e| e.to_string())?;
+        std::fs::write(&dest_path, format!("{new_content}\n")).map_err(|e| e.to_string())?;
+    }
+
+    // Set a title for the branch
+    let title = branch_name
+        .as_deref()
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "Branch".to_string());
+
+    let mut map = read_title_map();
+    map.insert(new_id.clone(), title);
+    write_title_map(&map)?;
+
+    Ok(new_id)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

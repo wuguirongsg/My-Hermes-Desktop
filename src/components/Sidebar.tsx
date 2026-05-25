@@ -21,11 +21,20 @@ const TAG_COLORS = [
 ];
 
 const TAGS_KEY = "hermes_session_tags";
+const BRANCH_META_KEY = "hermes_branch_meta";
 const UNTAGGED = "__untagged__";
 
 function loadTags(): Record<string, SessionTag> {
   try {
     return JSON.parse(localStorage.getItem(TAGS_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function loadBranchMeta(): Record<string, { parentId: string }> {
+  try {
+    return JSON.parse(localStorage.getItem(BRANCH_META_KEY) || "{}");
   } catch {
     return {};
   }
@@ -71,6 +80,7 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete,
   const [refreshing, setRefreshing] = useState(false);
 
   const [tags, setTags] = useState<Record<string, SessionTag>>(loadTags);
+  const [branchMeta, setBranchMeta] = useState<Record<string, { parentId: string }>>(loadBranchMeta);
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [draftText, setDraftText] = useState("");
   const [draftColor, setDraftColor] = useState(TAG_COLORS[0]);
@@ -102,6 +112,11 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete,
   };
 
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  // Reload branch metadata whenever the session list changes (e.g. after a /branch)
+  useEffect(() => {
+    setBranchMeta(loadBranchMeta());
+  }, [sessions]);
 
   // Close filter menu on outside click
   useEffect(() => {
@@ -199,8 +214,9 @@ export default function Sidebar({ sessions, activeId, onSelect, onNew, onDelete,
     const badge = badges[s.id];
     const meta = badge ? badgeMeta[badge] : null;
     const tag = tags[s.id];
+    const isBranch = !!branchMeta[s.id];
     const full = s.title || "Untitled";
-    const displayTitle = full.length > 15 ? full.slice(0, 15) + "…" : full;
+    const displayTitle = (isBranch ? "⎇ " : "") + (full.length > 15 ? full.slice(0, 15) + "…" : full);
 
     return (
       <div

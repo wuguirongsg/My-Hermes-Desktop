@@ -567,15 +567,53 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
   }, []);
 
 
+  const handleBranchSession = useCallback(
+    async (branchName: string | null) => {
+      if (!activeSessionId) return;
+      try {
+        const newId = await invoke<string>("fork_session", {
+          sessionId: activeSessionId,
+          branchName: branchName || null,
+        });
+        // Persist branch relationship for sidebar marker
+        const key = "hermes_branch_meta";
+        const existing: Record<string, { parentId: string }> = JSON.parse(
+          localStorage.getItem(key) || "{}"
+        );
+        existing[newId] = { parentId: activeSessionId };
+        localStorage.setItem(key, JSON.stringify(existing));
+        // Refresh list then switch to the new branch session
+        await loadSessions();
+        setActiveSessionId(newId);
+        try {
+          const raw = await invoke<unknown>("get_session_history", { sessionId: newId });
+          setSessionMessages((prev) => ({ ...prev, [newId]: parseHistoryMessages(raw) }));
+        } catch {
+          // history will reload on next session switch
+        }
+      } catch (e) {
+        setSessionErrors((prev) => ({ ...prev, global: `分支创建失败: ${e}` }));
+      }
+    },
+    [activeSessionId, loadSessions]
+  );
+
   const handleSlashCommand = useCallback((text: string): boolean => {
-    const cmd = text.trim().toLowerCase();
+    const parts = text.trim().split(/\s+/);
+    const cmd = parts[0].toLowerCase();
     if (!cmd.startsWith("/")) return false;
-    if (cmd.split(/\s+/)[0] === "/clear") {
+    if (cmd === "/clear") {
       handleNewSession();
       return true;
     }
+    if (cmd === "/branch") {
+      if (!activeSessionId) return true;
+      const name = text.trim().slice("/branch".length).trim() || null;
+      void handleBranchSession(name);
+      return true;
+    }
     return false;
-  }, [handleNewSession]);
+  }, [handleNewSession, activeSessionId, handleBranchSession]);
 
   const sendToSession = useCallback(
     async (
