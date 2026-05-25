@@ -202,6 +202,8 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
   const prevStreamingForQueueRef = useRef<Set<string>>(new Set());
   const activePtyId = useRef(`pty-${Date.now()}`);
   const pendingPtyCommandRef = useRef<string | null>(null);
+  // Breaks the handleSlashCommand → handleRetryLastMessage → sendToSession → handleSlashCommand cycle
+  const handleRetryRef = useRef<() => void>(() => {});
 
   // Derived values for current active session
   const activeSession = activeSessionId ? sessions.find((s) => s.id === activeSessionId) : null;
@@ -598,17 +600,41 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
     [activeSessionId, loadSessions]
   );
 
+  const handleUndoLastTurn = useCallback(async () => {
+    if (!activeSessionId) return;
+    try {
+      await invoke("undo_last_turn", { sessionId: activeSessionId });
+      const raw = await invoke<unknown>("get_session_history", { sessionId: activeSessionId });
+      setSessionMessages((prev) => ({ ...prev, [activeSessionId]: parseHistoryMessages(raw) }));
+    } catch (e) {
+      setSessionErrors((prev) => ({ ...prev, [activeSessionId]: String(e) }));
+    }
+  }, [activeSessionId]);
+
   const handleSlashCommand = useCallback((text: string): boolean => {
     const parts = text.trim().split(/\s+/);
     const cmd = parts[0].toLowerCase();
     if (!cmd.startsWith("/")) return false;
-    if (cmd === "/clear") {
+    if (cmd === "/clear" || cmd === "/new") {
       handleNewSession();
       return true;
     }
     if (cmd === "/title") {
       const name = text.trim().slice("/title".length).trim();
       if (name) void handleRenameSession(name);
+      return true;
+    }
+    if (cmd === "/retry") {
+      handleRetryRef.current();
+      return true;
+    }
+    if (cmd === "/undo") {
+      void handleUndoLastTurn();
+      return true;
+    }
+    if (cmd === "/background") {
+      const prompt = text.trim().slice("/background".length).trim();
+      if (prompt) void handleRunBackground(prompt);
       return true;
     }
     if (cmd === "/branch") {
@@ -618,7 +644,14 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
       return true;
     }
     return false;
-  }, [handleNewSession, handleRenameSession, activeSessionId, handleBranchSession]);
+  }, [
+    handleNewSession,
+    handleRenameSession,
+    handleUndoLastTurn,
+    handleRunBackground,
+    activeSessionId,
+    handleBranchSession,
+  ]);
 
   const sendToSession = useCallback(
     async (
@@ -816,6 +849,9 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
     };
     resend();
   }, [activeSessionId, streaming, sessionMessages, sendToSession]);
+
+  // Keep the ref in sync so handleSlashCommand can call handleRetryLastMessage without a circular dep
+  handleRetryRef.current = handleRetryLastMessage;
 
   // ─── Global listener (registered once on mount) ─────────────────────────────
 
