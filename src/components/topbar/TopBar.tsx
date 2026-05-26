@@ -11,6 +11,8 @@ interface Props {
   tokenDisplay: { input: string; output: string } | null;
   showTools: boolean;
   onToggleTools: () => void;
+  showThink: boolean;
+  onToggleThink: () => void;
   sessionTitle: string | null;
   onOpenTerminal: () => void;
   onOpenSnapshot: () => void;
@@ -27,6 +29,8 @@ export default function TopBar({
   tokenDisplay,
   showTools,
   onToggleTools,
+  showThink,
+  onToggleThink,
   sessionTitle,
   onOpenTerminal,
   onOpenSnapshot,
@@ -218,6 +222,16 @@ export default function TopBar({
           </span>
         </div>
       )}
+
+      {/* Think blocks toggle */}
+      <button
+        className={`app-titlebar-icon-btn topbar-tools-toggle${showThink ? " active" : ""}`}
+        onClick={onToggleThink}
+        title={showThink ? "隐藏思考过程" : "显示思考过程"}
+        aria-pressed={showThink}
+      >
+        <Icon name="brain" size={13} />
+      </button>
 
       {/* Tool calls toggle — subtle icon only */}
       <button

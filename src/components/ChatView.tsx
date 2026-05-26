@@ -44,6 +44,7 @@ interface Props {
   onGoToDashboard?: () => void;
   workingDir?: string | null;
   showTools?: boolean;
+  showThink?: boolean;
   memoryLoaded?: boolean | null;
   currentModel?: string | null;
 }
@@ -121,6 +122,7 @@ export default function ChatView({
   onGoToDashboard,
   workingDir,
   showTools = true,
+  showThink = true,
   memoryLoaded = null,
   currentModel = null,
 }: Props) {
@@ -605,6 +607,7 @@ export default function ChatView({
               isLastAssistant={msg.id === lastAssistantId}
               streaming={streaming}
               showTools={showTools}
+              showThink={showThink}
               onRetry={onRetryLastMessage}
               model={currentModel}
               memoryLoaded={memoryLoaded}

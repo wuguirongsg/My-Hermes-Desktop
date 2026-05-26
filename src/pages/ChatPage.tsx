@@ -32,6 +32,23 @@ function waitForUiPaint(): Promise<void> {
   });
 }
 
+// Split a text string on <think>...</think> tags (or unclosed <think>),
+// appending TextBlock / ThinkBlock entries into `out` in document order.
+function pushTextWithThinkTags(text: string, out: Message["blocks"]): void {
+  const THINK_RE = /<think>([\s\S]*?)(?:<\/think>|$)/gi;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = THINK_RE.exec(text)) !== null) {
+    const before = text.slice(last, m.index).trim();
+    if (before) out.push({ type: "text", content: before });
+    const thinkContent = m[1].trim();
+    if (thinkContent) out.push({ type: "think", content: thinkContent });
+    last = m.index + m[0].length;
+  }
+  const rest = text.slice(last).trim();
+  if (rest) out.push({ type: "text", content: rest });
+}
+
 function parseHistoryMessages(raw: unknown): Message[] {
   let items: unknown[];
   if (Array.isArray(raw)) {
@@ -51,24 +68,52 @@ function parseHistoryMessages(raw: unknown): Message[] {
     const role = item.role as string;
 
     if (role === "user" || role === "assistant") {
-      let text = "";
       const content = item.content;
-      if (typeof content === "string") {
-        text = content.trim();
-      } else if (Array.isArray(content)) {
-        text = (content as Record<string, unknown>[])
-          .filter((b) => b.type === "text")
-          .map((b) => String(b.text ?? ""))
-          .join("\n")
-          .trim();
-      }
-
       const imageAttachments = Array.isArray(item.image_attachments)
         ? (item.image_attachments as unknown[]).filter((u): u is string => typeof u === "string")
         : [];
 
       const blocks: Message["blocks"] = [];
-      if (text) blocks.push({ type: "text", content: text });
+
+      if (role === "assistant") {
+        // reasoning / reasoning_content: hermes persists DeepSeek/OpenAI
+        // reasoning tokens here. Show as a collapsible think block first.
+        const reasoning =
+          typeof item.reasoning === "string" && item.reasoning.trim()
+            ? item.reasoning.trim()
+            : typeof item.reasoning_content === "string" && item.reasoning_content.trim()
+            ? item.reasoning_content.trim()
+            : null;
+        if (reasoning) blocks.push({ type: "think", content: reasoning });
+
+        // Array content: Anthropic extended-thinking format or standard content blocks.
+        // Each block can be type "thinking" (native thinking), "text", or others.
+        if (Array.isArray(content)) {
+          for (const b of content as Record<string, unknown>[]) {
+            if (b.type === "thinking" && typeof b.thinking === "string" && b.thinking.trim()) {
+              blocks.push({ type: "think", content: b.thinking.trim() });
+            } else if (b.type === "text" && typeof b.text === "string" && b.text.trim()) {
+              pushTextWithThinkTags(b.text, blocks);
+            }
+          }
+        } else if (typeof content === "string" && content.trim()) {
+          // Plain string content may contain <think>...</think> regions (e.g. DeepSeek R1).
+          pushTextWithThinkTags(content, blocks);
+        }
+      } else {
+        // User messages: plain text only.
+        let text = "";
+        if (typeof content === "string") {
+          text = content.trim();
+        } else if (Array.isArray(content)) {
+          text = (content as Record<string, unknown>[])
+            .filter((b) => b.type === "text")
+            .map((b) => String(b.text ?? ""))
+            .join("\n")
+            .trim();
+        }
+        if (text) blocks.push({ type: "text", content: text });
+      }
 
       if (role === "assistant" && Array.isArray(item.tool_calls)) {
         const msgIdx = messages.length;
@@ -165,6 +210,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
   const [workingDir, setWorkingDir] = useState<string | null>(() => localStorage.getItem("hermes_working_dir"));
   const [fileTreeOpen, setFileTreeOpen] = useState(false);
   const [showTools, setShowTools] = useState<boolean>(() => localStorage.getItem("hermes_show_tools") === "true");
+  const [showThink, setShowThink] = useState<boolean>(() => localStorage.getItem("hermes_show_think") !== "false");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [snapshotPanelOpen, setSnapshotPanelOpen] = useState(false);
   const [snapshotCreateCount, setSnapshotCreateCount] = useState(0);
@@ -1171,6 +1217,14 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
             return next;
           });
         }}
+        showThink={showThink}
+        onToggleThink={() => {
+          setShowThink((v) => {
+            const next = !v;
+            localStorage.setItem("hermes_show_think", String(next));
+            return next;
+          });
+        }}
         onSendMessage={handleSendMessage}
         onNewSession={handleNewSession}
         onRenameSession={handleRenameSession}
@@ -1286,6 +1340,7 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
           pendingInputAppend={pendingInputAppend}
           workingDir={workingDir}
           showTools={showTools}
+          showThink={showThink}
           contextPct={contextPct}
           onCompress={() => handlePtyWrite("/compress")}
         />

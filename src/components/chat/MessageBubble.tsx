@@ -172,6 +172,7 @@ interface Props {
   isLastAssistant: boolean;
   streaming: boolean;
   showTools?: boolean;
+  showThink?: boolean;
   onRetry: () => void;
   model?: string | null;
   memoryLoaded?: boolean | null;
@@ -276,7 +277,7 @@ function toSpokenText(markdown: string): string {
   return text;
 }
 
-export default function MessageBubble({ message, isLastAssistant, streaming, showTools = true, onRetry, model, memoryLoaded, assistantIndex }: Props) {
+export default function MessageBubble({ message, isLastAssistant, streaming, showTools = true, showThink = true, onRetry, model, memoryLoaded, assistantIndex }: Props) {
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [groundingAnchor, setGroundingAnchor] = useState<DOMRect | null>(null);
@@ -285,9 +286,17 @@ export default function MessageBubble({ message, isLastAssistant, streaming, sho
 
   const isStreaming = isLastAssistant && message.status === "streaming";
   const isLiveTerminal = !isUser && (isStreaming || message.status === "error");
-  const isPureToolMessage = message.blocks.length > 0 && message.blocks.every((b) => b.type === "tool");
-  // 隐藏工具时，只隐藏已完成的纯工具消息；live terminal 占位和错误输出必须保留。
-  if (!showTools && isPureToolMessage && !isLiveTerminal) return null;
+  // A message is "invisible" when every block it contains is hidden by the
+  // current showTools / showThink settings. Live terminal and error messages
+  // must always show so the user sees streaming output and errors.
+  const allBlocksHidden =
+    message.blocks.length > 0 &&
+    message.blocks.every((b) => {
+      if (b.type === "tool") return !showTools;
+      if (b.type === "think") return !showThink;
+      return false;
+    });
+  if (allBlocksHidden && !isLiveTerminal) return null;
   const showCopy = !isUser && !isStreaming && message.status === "done";
   const showRetry = isLastAssistant && !streaming && message.status === "done";
 
@@ -447,7 +456,7 @@ export default function MessageBubble({ message, isLastAssistant, streaming, sho
               const isLastBlock = i === message.blocks.length - 1;
 
               if (block.type === "think") {
-                return <ThinkBlock key={i} content={block.content} />;
+                return showThink ? <ThinkBlock key={i} content={block.content} /> : null;
               }
               if (block.type === "tool") {
                 return showTools ? <ToolBlock key={i} block={block} /> : null;

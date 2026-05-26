@@ -207,9 +207,10 @@ pub async fn send_message(
 ) -> Result<(), String> {
     emit(&app, &session_tag, "raw", "Starting Hermes desktop bridge...");
 
-    // No -Q: non-quiet mode streams output token-by-token as the model generates.
+    // -q: single-query non-interactive mode.
+    // -v: verbose mode enables [thinking] prefix lines in stdout (reasoning tokens).
     // PYTHONUNBUFFERED=1 ensures Python flushes stdout on each write.
-    let mut args: Vec<String> = vec!["chat".into(), "-q".into(), message.clone()];
+    let mut args: Vec<String> = vec!["chat".into(), "-q".into(), message.clone(), "-v".into()];
     if let Some(ref id) = session_id {
         args.push("--resume".into());
         args.push(id.clone());
@@ -333,17 +334,34 @@ pub async fn send_message(
             continue;
         }
 
-        // ── Think block ───────────────────────────────────────────────────────
-        if trimmed == "<think>" || trimmed.to_lowercase() == "[thinking]" || trimmed == "《思考》"
-        {
+        // ── Think block: hermes -v format "[thinking] content" ───────────────
+        // Each reasoning token line is prefixed with "[thinking]" on stdout.
+        // Consecutive lines are merged into one think block; the block closes
+        // when a non-[thinking] content line appears.
+        if let Some(think_content) = trimmed.strip_prefix("[thinking]") {
+            let think_content = think_content.trim();
+            if !in_think {
+                in_think = true;
+                emit(&app, &session_tag, "think_start", "");
+            }
+            if !think_content.is_empty() {
+                emit(&app, &session_tag, "think", think_content);
+            }
+            continue;
+        } else if in_think && !trimmed.is_empty() {
+            // First non-empty, non-[thinking] line closes the think block.
+            in_think = false;
+            emit(&app, &session_tag, "think_end", "");
+            // Fall through to process this line normally.
+        }
+
+        // ── Think block: XML tag format "<think>…</think>" ───────────────────
+        if trimmed == "<think>" || trimmed == "《思考》" {
             in_think = true;
             emit(&app, &session_tag, "think_start", "");
             continue;
         }
-        if trimmed == "</think>"
-            || trimmed.to_lowercase() == "[/thinking]"
-            || trimmed == "《/思考》"
-        {
+        if trimmed == "</think>" || trimmed == "《/思考》" {
             in_think = false;
             emit(&app, &session_tag, "think_end", "");
             continue;

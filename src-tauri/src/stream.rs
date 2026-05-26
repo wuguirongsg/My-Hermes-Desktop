@@ -102,6 +102,22 @@ pub fn is_decorative(trimmed: &str) -> bool {
         "Welcome to Hermes",
         "Tip:",
         "Warning:",
+        // hermes -v verbose init lines (stdout, not stderr)
+        "🤖 AI Agent initialized",
+        "🔗 Using custom base URL",
+        "🔑 Using API key",
+        "✅ Enabled toolset",
+        "✅ Enabled toolsets",
+        "🛠️  Final tool selection",
+        "🛠️  Loaded ",
+        "⚠️  Some tools may not work",
+        "📊 Context limit",
+        "💬 Starting conversation",
+        "🎉 Conversation completed",
+        "💬 Resuming conversation",
+        "🔁 ",
+        // Tool list summary lines
+        "🛠️ ",
     ] {
         if trimmed.starts_with(prefix) {
             return true;
