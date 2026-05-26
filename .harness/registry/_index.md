@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-26 FIX] SnapshotPanel 保存快照双重条目 — handleSave 直接 setSnapshots + onSend("/snapshot create") 触发 externalCreateCount++ 双重创建；删掉直接的 setSnapshots 调用，统一走 externalCreateCount 机制；发现快照恢复 ID 失效问题（本地生成 ID 与 Hermes 真实 ID 不符），记入 backlog 待下次处理
+
 [2026-05-25 17:00] FIX PTY 终端无颜色 — build_tui_command 未设置 TERM/COLORTERM，App Bundle 环境继承 TERM=dumb；注入 xterm-256color + truecolor 修复
 
 [2026-05-25 16:21] FIX README 增加 Windows 截图，并说明 Windows 仅支持 WSL 下运行 Hermes、Linux 未详细测试

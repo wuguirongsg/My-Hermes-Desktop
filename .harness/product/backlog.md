@@ -39,6 +39,8 @@
 
 <!-- 新需求追加到这里 -->
 
+- [2026-05-26] [VERIFY] 快照恢复 ID 对不上 — SnapshotPanel 用本地自生成的 `snap-TIMESTAMP-N` ID，而 Hermes 实际快照 ID 是另一套。点击"恢复"发出的 `/snapshot restore snap-xxx` Hermes 找不到，恢复功能实际失效。修法：解析 `/snapshot create` 的 stream 输出，提取真实 Hermes snapshot ID，更新本地记录；或临时移除恢复按钮。优先级：中，下次 BUILD session 评估。
+
 - [2026-05-18] [用户反馈] 语音输入输出优化（whisper-rs 方案）
   - 当前 feat-214 使用 Web Speech API（需联网，走 Apple 服务器）+ macOS `say`
   - 优化方向：用 `whisper-rs`（whisper.cpp 的 Rust binding）替换 Web Speech API，实现完全本地离线 STT，tiny 模型 75MB，精度更高，隐私更好

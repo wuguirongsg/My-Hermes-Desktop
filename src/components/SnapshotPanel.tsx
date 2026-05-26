@@ -179,7 +179,6 @@ export default function SnapshotPanel({
   }
 
   const handleSave = () => {
-    setSnapshots((prev) => [makeEntry(prev.length + 1, sessionTitle), ...prev]);
     onSend("/snapshot create");
   };
 
