@@ -305,13 +305,6 @@ pub async fn send_message(
         #[cfg(not(target_os = "windows"))]
         let show_raw = true;
 
-        // Only forward non-decorative lines to the live terminal view.
-        // Decorative lines (verbose init logs, separators, session footer, etc.)
-        // still participate in the state machine below but are not shown to the user.
-        if show_raw && !is_decorative(trimmed) {
-            emit(&app, &session_tag, "raw", &clean);
-        }
-
         // ── Footer (session info after response) ──────────────────────────────
         if trimmed.starts_with("Resume this session with:") {
             discovered_session_id = extract_resume_session_id(trimmed);
@@ -395,6 +388,14 @@ pub async fn send_message(
                 continue;
             }
             in_diff = false;
+        }
+
+        // Only lines that reach here are actual response text.
+        // Emit raw here (after all filters) so the live terminal shows exactly
+        // what will appear in the final rendered text blocks — no think lines,
+        // no decorative lines, no footer noise.
+        if show_raw {
+            emit(&app, &session_tag, "raw", &clean);
         }
 
         // Emit trimmed content so that the 4-space terminal box indent is removed.
