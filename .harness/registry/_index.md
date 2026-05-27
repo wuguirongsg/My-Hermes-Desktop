@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-27 FIX] 移除 -v 参数 — verbose 模式是 stderr 日志噪音根因；去掉后 hermes 不再输出大量 DEBUG/INFO 初始化日志；<think> XML 标签检测保留，[thinking] 前缀检测保留但不再触发
+
 [2026-05-27 FIX] stderr DEBUG/INFO 日志过滤 — 在 stderr 处理器内检测 " - DEBUG - " 和 " - INFO - " 子串并跳过；WARNING/ERROR 保留；不改 is_decorative 和 stdout 路径，避免误伤回复文本
 
 [2026-05-27 FIX] 终端输出还原至 eb887a0 之前 — emit raw 回到循环顶部无条件转发；stderr 全部非空行恢复转发；ChatPage 初始占位文字恢复；think 块/−v 等其余改动保持不动
