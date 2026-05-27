@@ -205,8 +205,6 @@ pub async fn send_message(
     working_dir: Option<String>,
     skills: Option<Vec<String>>,
 ) -> Result<(), String> {
-    emit(&app, &session_tag, "raw", "Starting Hermes desktop bridge...");
-
     // -q: single-query non-interactive mode.
     // -v: verbose mode enables [thinking] prefix lines in stdout (reasoning tokens).
     // PYTHONUNBUFFERED=1 ensures Python flushes stdout on each write.
@@ -259,7 +257,6 @@ pub async fn send_message(
 
     let stdout = child.stdout.take().ok_or("No stdout")?;
     let stderr = child.stderr.take();
-    emit(&app, &session_tag, "raw", "Hermes process started. Waiting for output...");
 
     // Store child for kill_session to use
     {
@@ -274,7 +271,8 @@ pub async fn send_message(
             let reader = BufReader::new(stderr);
             for line in reader.lines().map_while(Result::ok) {
                 let clean = strip_ansi(&line);
-                if !clean.trim().is_empty() {
+                let t = clean.trim();
+                if !t.is_empty() && !is_decorative(t) {
                     emit(&app_for_stderr, &session_for_stderr, "raw", &clean);
                 }
             }
@@ -310,7 +308,10 @@ pub async fn send_message(
         #[cfg(not(target_os = "windows"))]
         let show_raw = true;
 
-        if show_raw {
+        // Only forward non-decorative lines to the live terminal view.
+        // Decorative lines (verbose init logs, separators, session footer, etc.)
+        // still participate in the state machine below but are not shown to the user.
+        if show_raw && !is_decorative(trimmed) {
             emit(&app, &session_tag, "raw", &clean);
         }
 

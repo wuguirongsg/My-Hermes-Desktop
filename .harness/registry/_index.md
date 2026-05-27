@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-05-27 FIX] 流式终端 debug 噪音过多 — 删除两条手动启动 emit raw；stdout/stderr 均在 emit raw 前过滤 is_decorative 行（verbose 初始化日志、分隔线、footer 等）；有实际内容的行才进入 rawOutput/live terminal 视图
+
 [2026-05-26 FIX] CI package-lock.json 不同步 — esbuild@0.28.0 平台包缺失，本地 npm install 重新生成锁文件并推送修复
 
 [2026-05-26 FIX] 快照保存改用 Rust 执行 hermes backup --quick — /snapshot create 在 chat -q 非交互模式下只是普通消息不执行；新增 snapshot_create Tauri 命令，解析真实 hermesId，恢复按钮用真实 ID，无 ID 时禁用；提示栏显示存储路径 ~/.hermes/state-snapshots/
