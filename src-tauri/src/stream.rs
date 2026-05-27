@@ -134,5 +134,30 @@ pub fn is_decorative(trimmed: &str) -> bool {
         return true;
     }
 
+    // Python logging format: "HH:MM:SS - module - LEVEL - message"
+    // Matches DEBUG / INFO / WARNING / ERROR / CRITICAL from hermes internals.
+    // We drop DEBUG and INFO; WARNING/ERROR are allowed through so real errors surface.
+    if trimmed.contains(" - DEBUG - ") || trimmed.contains(" - INFO - ") {
+        return true;
+    }
+    // Bare "HH:MM:SS - module - ..." lines that don't carry a level keyword
+    // (e.g. multi-line continuation or config-dump lines like "provider=... model=...")
+    {
+        let bytes = trimmed.as_bytes();
+        if bytes.len() >= 9
+            && bytes[2] == b':'
+            && bytes[5] == b':'
+            && bytes[..2].iter().all(|&b| b.is_ascii_digit())
+            && bytes[3..5].iter().all(|&b| b.is_ascii_digit())
+            && bytes[6..8].iter().all(|&b| b.is_ascii_digit())
+        {
+            return true;
+        }
+    }
+    // Key=value config-dump lines emitted during agent initialisation
+    if trimmed.starts_with("provider=") || trimmed.starts_with("base_url=") {
+        return true;
+    }
+
     false
 }

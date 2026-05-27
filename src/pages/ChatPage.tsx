@@ -755,7 +755,7 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
         id: assistantId,
         role: "assistant",
         blocks: [],
-        rawOutput: "Starting Hermes...\nLaunching agent process...",
+        rawOutput: "",
         timestamp: new Date().toISOString(),
         status: "streaming",
       };
