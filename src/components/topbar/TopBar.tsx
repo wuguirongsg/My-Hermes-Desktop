@@ -3,6 +3,7 @@ import { HermesStatus } from "../../types";
 import Icon from "../Icon";
 import ContextBar from "./ContextBar";
 import ModelPicker from "./ModelPicker";
+import ReasoningPicker from "./ReasoningPicker";
 
 interface Props {
   streaming: boolean;
@@ -179,6 +180,10 @@ export default function TopBar({
 
       {/* Context progress bar + compress trigger (feat-003/004) */}
       <ContextBar status={status} onCompress={handleCompress} />
+
+      <div className="topbar-divider" />
+
+      <ReasoningPicker onNewSession={onNewSession} />
 
       <div className="topbar-spacer" />
 

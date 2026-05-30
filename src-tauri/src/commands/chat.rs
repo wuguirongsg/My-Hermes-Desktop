@@ -492,6 +492,95 @@ pub async fn set_hermes_model(provider: String, model: String) -> Result<(), Str
     std::fs::write(&path, updated).map_err(|e| format!("Cannot write config.yaml: {e}"))
 }
 
+// ─── Reasoning Effort ────────────────────────────────────────────────────────
+
+fn parse_reasoning_effort(yaml: &str) -> String {
+    let mut in_agent = false;
+    for line in yaml.lines() {
+        if line.trim() == "agent:" {
+            in_agent = true;
+            continue;
+        }
+        if in_agent {
+            // A non-indented, non-empty line means we've left the agent section
+            if !line.starts_with(' ') && !line.is_empty() {
+                break;
+            }
+            let t = line.trim();
+            if let Some(v) = t.strip_prefix("reasoning_effort:") {
+                return v.trim().trim_matches('\'').trim_matches('"').to_string();
+            }
+        }
+    }
+    "medium".to_string()
+}
+
+fn rewrite_reasoning_effort(yaml: &str, new_level: &str) -> String {
+    let mut lines: Vec<String> = Vec::new();
+    let mut in_agent = false;
+    let mut found = false;
+    let mut agent_end_idx: Option<usize> = None;
+
+    let raw_lines: Vec<&str> = yaml.lines().collect();
+    for (i, line) in raw_lines.iter().enumerate() {
+        if *line == "agent:" {
+            in_agent = true;
+            lines.push((*line).to_string());
+            continue;
+        }
+        if in_agent {
+            if !line.starts_with(' ') && !line.is_empty() {
+                in_agent = false;
+                agent_end_idx = Some(i);
+            } else {
+                let t = line.trim();
+                if t.starts_with("reasoning_effort:") {
+                    lines.push(format!("  reasoning_effort: {}", new_level));
+                    found = true;
+                    continue;
+                }
+            }
+        }
+        lines.push((*line).to_string());
+    }
+
+    if !found {
+        if let Some(idx) = agent_end_idx {
+            lines.insert(idx, format!("  reasoning_effort: {}", new_level));
+        } else {
+            lines.push(format!("  reasoning_effort: {}", new_level));
+        }
+    }
+
+    lines.join("\n")
+}
+
+#[tauri::command]
+pub async fn get_reasoning_effort() -> Result<String, String> {
+    let home = crate::commands::sessions::hermes_home()
+        .ok_or_else(|| "Cannot locate hermes home".to_string())?;
+    let path = home.join("config.yaml");
+    let text = std::fs::read_to_string(&path).map_err(|e| format!("Cannot read config.yaml: {e}"))?;
+    Ok(parse_reasoning_effort(&text))
+}
+
+#[tauri::command]
+pub async fn set_reasoning_effort(level: String) -> Result<(), String> {
+    let valid = ["none", "minimal", "low", "medium", "high", "xhigh"];
+    if !valid.contains(&level.as_str()) {
+        return Err(format!(
+            "Invalid reasoning effort level: {}. Valid: none, minimal, low, medium, high, xhigh",
+            level
+        ));
+    }
+    let home = crate::commands::sessions::hermes_home()
+        .ok_or_else(|| "Cannot locate hermes home".to_string())?;
+    let path = home.join("config.yaml");
+    let text = std::fs::read_to_string(&path).map_err(|e| format!("Cannot read config.yaml: {e}"))?;
+    let updated = rewrite_reasoning_effort(&text, &level);
+    std::fs::write(&path, updated).map_err(|e| format!("Cannot write config.yaml: {e}"))
+}
+
 // ─── Helpers for get_hermes_model_config ─────────────────────────────────────
 
 fn parse_model_section(yaml: &str) -> (String, String) {

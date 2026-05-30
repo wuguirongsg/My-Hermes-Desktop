@@ -1719,6 +1719,69 @@ body {
   line-height: 1.4;
 }
 
+/* ── Reasoning Picker ─────────────────────────────────────────────────────── */
+
+.reasoning-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.reasoning-picker-trigger-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--accent-teal);
+  white-space: nowrap;
+}
+
+.reasoning-picker-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 200;
+  overflow: hidden;
+  padding: 3px 0;
+}
+
+.reasoning-picker-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 5px 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-sans);
+  color: var(--body);
+  text-align: left;
+  transition: background 0.1s;
+  gap: 4px;
+}
+
+.reasoning-picker-item:hover {
+  background: var(--surface-soft);
+}
+
+.reasoning-picker-item.active {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.reasoning-picker-check {
+  width: 12px;
+  font-size: 7px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
 .hermes-indicator {
   width: 7px;
   height: 7px;
