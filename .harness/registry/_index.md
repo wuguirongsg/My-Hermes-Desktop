@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-06-09 20:46] DONE 折叠回复会话大纲 — 顶栏一键折叠全部 Hermes 回复，按用户提问聚合连续回复，支持单组展开/收起 → commit 8739f04
+
 [2026-06-09 FIX] hermes v0.15 升级后对话内容无法正常显示 — 新版用 ┌─ Reasoning ─┐...└──┘ 盒子包裹推理过程，旧解析器将其当普通文本 emit 导致推理内容污染对话气泡；新增 in_reasoning_box 状态变量识别此格式（think_start/think/think_end）；同步修复 session ID 提取 bug（extract_resume_session_id 错误地调用在无 --resume 的 header 行） → commit 待提交
 
 [2026-05-27 FIX] 移除 -v 参数 — verbose 模式是 stderr 日志噪音根因；去掉后 hermes 不再输出大量 DEBUG/INFO 初始化日志；<think> XML 标签检测保留，[thinking] 前缀检测保留但不再触发
