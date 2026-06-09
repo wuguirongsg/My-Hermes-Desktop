@@ -8,7 +8,7 @@ import GoalBar from "./chat/GoalBar";
 import PersonalityPicker from "./chat/PersonalityPicker";
 import SlashCommandMenu, { SLASH_COMMANDS, SlashCommand } from "./chat/SlashCommandMenu";
 import RefPickerPanel from "./chat/RefPickerPanel";
-import { buildConversationComparePairs, getMessageText } from "../utils/conversationCompare";
+import { buildConversationComparePairs } from "../utils/conversationCompare";
 import { RefItem } from "./chat/AtMentionMenu";
 
 interface AttachedImage {
@@ -634,56 +634,46 @@ export default function ChatView({
               <span className="compare-kicker">对比视图</span>
               <strong>左侧是 Hermes 回答，右侧是用户提问</strong>
             </div>
-            <span className="compare-hint">色块从问题收束到回答，模拟 diff 漏斗关系</span>
           </div>
-          {comparePairs.map((pair, idx) => {
-            const questionText = getMessageText(pair.user);
-            return (
-              <div className="compare-turn" key={pair.id}>
-                <div className="compare-pane compare-pane-assistant">
-                  {pair.assistant ? (
-                    <MessageBubble
-                      message={pair.assistant}
-                      isLastAssistant={pair.assistant.id === lastAssistantId}
-                      streaming={streaming}
-                      showTools={showTools}
-                      showThink={showThink}
-                      onRetry={onRetryLastMessage}
-                      model={currentModel}
-                      memoryLoaded={memoryLoaded}
-                      assistantIndex={assistantIndexMap.get(pair.assistant.id)}
-                    />
-                  ) : (
-                    <div className="compare-empty-answer ui-font">
-                      等待 Hermes 回答…
-                    </div>
-                  )}
-                </div>
-                <div
-                  className={`compare-funnel funnel-${idx % 4}`}
-                  aria-hidden="true"
-                  title={questionText ? `提问概括：${questionText}` : "提问概括"}
-                >
-                  <span />
-                </div>
-                <div className="compare-pane compare-pane-user">
-                  <div className="compare-question-summary ui-font" title={questionText}>
-                    {questionText || "用户提问"}
+          {comparePairs.map((pair) => (
+            <div className="compare-turn" key={pair.id}>
+              <div className="compare-pane compare-pane-assistant">
+                {pair.assistant ? (
+                  <MessageBubble
+                    message={pair.assistant}
+                    isLastAssistant={pair.assistant.id === lastAssistantId}
+                    streaming={streaming}
+                    showTools={showTools}
+                    showThink={showThink}
+                    onRetry={onRetryLastMessage}
+                    model={currentModel}
+                    memoryLoaded={memoryLoaded}
+                    assistantIndex={assistantIndexMap.get(pair.assistant.id)}
+                  />
+                ) : (
+                  <div className="compare-empty-answer ui-font">
+                    等待 Hermes 回答…
                   </div>
-                  {pair.user && (
-                    <MessageBubble
-                      message={pair.user}
-                      isLastAssistant={false}
-                      streaming={false}
-                      showTools={showTools}
-                      showThink={showThink}
-                      onRetry={onRetryLastMessage}
-                    />
-                  )}
-                </div>
+                )}
               </div>
-            );
-          })}
+              <div className="compare-pane compare-pane-user">
+                {pair.user ? (
+                  <MessageBubble
+                    message={pair.user}
+                    isLastAssistant={false}
+                    streaming={false}
+                    showTools={showTools}
+                    showThink={showThink}
+                    onRetry={onRetryLastMessage}
+                  />
+                ) : (
+                  <div className="compare-empty-question ui-font">
+                    未找到对应提问
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
           {renderErrorNotice()}
           <div ref={messagesEndRef} />
         </div>
