@@ -8,6 +8,7 @@ export type IconName =
   | "check"
   | "chevronRight"
   | "close"
+  | "columns"
   | "command"
   | "copy"
   | "code"
@@ -80,6 +81,14 @@ const paths: Record<IconName, JSX.Element> = {
     <>
       <path d="M6 6l12 12" />
       <path d="M18 6 6 18" />
+    </>
+  ),
+  columns: (
+    <>
+      <rect x="3.5" y="4" width="7" height="16" rx="1.5" />
+      <rect x="13.5" y="4" width="7" height="16" rx="1.5" />
+      <path d="M10.5 8h3" />
+      <path d="M10.5 16h3" />
     </>
   ),
   command: (

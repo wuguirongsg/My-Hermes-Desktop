@@ -210,6 +210,7 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
   const [workingDir, setWorkingDir] = useState<string | null>(() => localStorage.getItem("hermes_working_dir"));
   const [fileTreeOpen, setFileTreeOpen] = useState(false);
   const [showTools, setShowTools] = useState<boolean>(() => localStorage.getItem("hermes_show_tools") === "true");
+  const [compareView, setCompareView] = useState<boolean>(() => localStorage.getItem("hermes_compare_view") === "true");
   const [showThink, setShowThink] = useState<boolean>(() => localStorage.getItem("hermes_show_think") !== "false");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [snapshotPanelOpen, setSnapshotPanelOpen] = useState(false);
@@ -1221,6 +1222,14 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
             return next;
           });
         }}
+        compareView={compareView}
+        onToggleCompareView={() => {
+          setCompareView((v) => {
+            const next = !v;
+            localStorage.setItem("hermes_compare_view", String(next));
+            return next;
+          });
+        }}
         showThink={showThink}
         onToggleThink={() => {
           setShowThink((v) => {
@@ -1344,6 +1353,7 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
           pendingInputAppend={pendingInputAppend}
           workingDir={workingDir}
           showTools={showTools}
+          compareView={compareView}
           showThink={showThink}
           contextPct={contextPct}
           onCompress={() => handlePtyWrite("/compress")}

@@ -12,6 +12,8 @@ interface Props {
   tokenDisplay: { input: string; output: string } | null;
   showTools: boolean;
   onToggleTools: () => void;
+  compareView: boolean;
+  onToggleCompareView: () => void;
   showThink: boolean;
   onToggleThink: () => void;
   sessionTitle: string | null;
@@ -30,6 +32,8 @@ export default function TopBar({
   tokenDisplay,
   showTools,
   onToggleTools,
+  compareView,
+  onToggleCompareView,
   showThink,
   onToggleThink,
   sessionTitle,
@@ -246,6 +250,16 @@ export default function TopBar({
         aria-pressed={showTools}
       >
         <Icon name="tool" size={13} />
+      </button>
+
+      {/* Conversation compare view toggle */}
+      <button
+        className={`app-titlebar-icon-btn topbar-tools-toggle${compareView ? " active" : ""}`}
+        onClick={onToggleCompareView}
+        title={compareView ? "切回普通对话视图" : "切换为左右对比视图"}
+        aria-pressed={compareView}
+      >
+        <Icon name="columns" size={13} />
       </button>
     </div>
   );
