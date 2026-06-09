@@ -4,6 +4,8 @@
 > - Session 开始时：只读最近 5 条，了解近况
 > - Session 结束时：在最前面追加新条目（不是末尾）
 
+[2026-06-09 FIX] hermes v0.15 升级后对话内容无法正常显示 — 新版用 ┌─ Reasoning ─┐...└──┘ 盒子包裹推理过程，旧解析器将其当普通文本 emit 导致推理内容污染对话气泡；新增 in_reasoning_box 状态变量识别此格式（think_start/think/think_end）；同步修复 session ID 提取 bug（extract_resume_session_id 错误地调用在无 --resume 的 header 行） → commit 待提交
+
 [2026-05-27 FIX] 移除 -v 参数 — verbose 模式是 stderr 日志噪音根因；去掉后 hermes 不再输出大量 DEBUG/INFO 初始化日志；<think> XML 标签检测保留，[thinking] 前缀检测保留但不再触发
 
 [2026-05-27 FIX] stderr DEBUG/INFO 日志过滤 — 在 stderr 处理器内检测 " - DEBUG - " 和 " - INFO - " 子串并跳过；WARNING/ERROR 保留；不改 is_decorative 和 stdout 路径，避免误伤回复文本
@@ -152,6 +154,8 @@
 ---
 
 <!-- 新条目追加到这里（上方） -->
+
+[2026-06-09 16:48] FIX 修复左右对比会话长内容重叠 — 移除对比面板消息组的百分比高度，让 Grid 行按回答内容自然撑开
 
 [2026-05-25 DONE] feat-208 分支会话 passes=true — fork_session Rust 命令复制 session 文件；ChatPage 拦截 /branch [name]；Sidebar hermes_branch_meta localStorage + ⎇ 图标标记
 
