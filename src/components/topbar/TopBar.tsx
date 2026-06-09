@@ -12,8 +12,8 @@ interface Props {
   tokenDisplay: { input: string; output: string } | null;
   showTools: boolean;
   onToggleTools: () => void;
-  compareView: boolean;
-  onToggleCompareView: () => void;
+  repliesCollapsed: boolean;
+  onToggleRepliesCollapsed: () => void;
   showThink: boolean;
   onToggleThink: () => void;
   sessionTitle: string | null;
@@ -32,8 +32,8 @@ export default function TopBar({
   tokenDisplay,
   showTools,
   onToggleTools,
-  compareView,
-  onToggleCompareView,
+  repliesCollapsed,
+  onToggleRepliesCollapsed,
   showThink,
   onToggleThink,
   sessionTitle,
@@ -252,14 +252,15 @@ export default function TopBar({
         <Icon name="tool" size={13} />
       </button>
 
-      {/* Conversation compare view toggle */}
+      {/* Collapse assistant replies */}
       <button
-        className={`app-titlebar-icon-btn topbar-tools-toggle${compareView ? " active" : ""}`}
-        onClick={onToggleCompareView}
-        title={compareView ? "切回普通对话视图" : "切换为左右对比视图"}
-        aria-pressed={compareView}
+        className={`app-titlebar-icon-btn topbar-tools-toggle${repliesCollapsed ? " active" : ""}`}
+        onClick={onToggleRepliesCollapsed}
+        title={repliesCollapsed ? "展开全部 Hermes 回复" : "折叠全部 Hermes 回复"}
+        aria-label={repliesCollapsed ? "展开全部 Hermes 回复" : "折叠全部 Hermes 回复"}
+        aria-pressed={repliesCollapsed}
       >
-        <Icon name="columns" size={13} />
+        <Icon name="chevronRight" size={13} />
       </button>
     </div>
   );

@@ -8,7 +8,7 @@ import GoalBar from "./chat/GoalBar";
 import PersonalityPicker from "./chat/PersonalityPicker";
 import SlashCommandMenu, { SLASH_COMMANDS, SlashCommand } from "./chat/SlashCommandMenu";
 import RefPickerPanel from "./chat/RefPickerPanel";
-import { buildConversationComparePairs } from "../utils/conversationCompare";
+import { buildConversationGroups } from "../utils/conversationGroups";
 import { RefItem } from "./chat/AtMentionMenu";
 
 interface AttachedImage {
@@ -45,7 +45,7 @@ interface Props {
   onGoToDashboard?: () => void;
   workingDir?: string | null;
   showTools?: boolean;
-  compareView?: boolean;
+  repliesCollapsed?: boolean;
   showThink?: boolean;
   memoryLoaded?: boolean | null;
   currentModel?: string | null;
@@ -124,7 +124,7 @@ export default function ChatView({
   onGoToDashboard,
   workingDir,
   showTools = true,
-  compareView = false,
+  repliesCollapsed = false,
   showThink = true,
   memoryLoaded = null,
   currentModel = null,
@@ -166,6 +166,7 @@ export default function ChatView({
   const atTriggerPosRef = useRef<number>(0);
 
   const [isRecording, setIsRecording] = useState(false);
+  const [expandedReplyGroups, setExpandedReplyGroups] = useState<Set<string>>(() => new Set());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
@@ -552,7 +553,20 @@ export default function ChatView({
     }
   }
 
-  const comparePairs = compareView ? buildConversationComparePairs(messages) : [];
+  const conversationGroups = repliesCollapsed ? buildConversationGroups(messages) : [];
+
+  useEffect(() => {
+    if (!repliesCollapsed) setExpandedReplyGroups(new Set());
+  }, [repliesCollapsed]);
+
+  const toggleReplyGroup = (groupId: string) => {
+    setExpandedReplyGroups((current) => {
+      const next = new Set(current);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  };
 
   const renderErrorNotice = () => {
     if (!error) return null;
@@ -627,53 +641,75 @@ export default function ChatView({
             </div>
           </div>
         </div>
-      ) : compareView ? (
-        <div className="chat-messages conversation-compare" ref={scrollContainerRef} onScroll={handleMessagesScroll}>
-          <div className="compare-view-header ui-font">
-            <div>
-              <span className="compare-kicker">对比视图</span>
-              <strong>左侧是 Hermes 回答，右侧是用户提问</strong>
-            </div>
-          </div>
-          {comparePairs.map((pair) => (
-            <div className="compare-turn" key={pair.id}>
-              <div className="compare-pane compare-pane-assistant">
-                {pair.assistant ? (
-                  <MessageBubble
-                    message={pair.assistant}
-                    isLastAssistant={pair.assistant.id === lastAssistantId}
-                    streaming={streaming}
-                    showTools={showTools}
-                    showThink={showThink}
-                    onRetry={onRetryLastMessage}
-                    model={currentModel}
-                    memoryLoaded={memoryLoaded}
-                    assistantIndex={assistantIndexMap.get(pair.assistant.id)}
-                  />
+      ) : repliesCollapsed ? (
+        <div className="chat-messages conversation-outline" ref={scrollContainerRef} onScroll={handleMessagesScroll}>
+          {conversationGroups.map((group) => {
+            const hasStreamingReply = group.assistants.some(
+              (reply) => reply.id === lastAssistantId && reply.status === "streaming"
+            );
+            const isExpanded = expandedReplyGroups.has(group.id) || hasStreamingReply;
+            const replyCount = group.assistants.length;
+
+            return (
+              <section className="conversation-group" key={group.id}>
+                <div className="conversation-question">
+                  {group.user ? (
+                    <MessageBubble
+                      message={group.user}
+                      isLastAssistant={false}
+                      streaming={false}
+                      showTools={showTools}
+                      showThink={showThink}
+                      onRetry={onRetryLastMessage}
+                    />
+                  ) : (
+                    <div className="conversation-orphan-label ui-font">会话开始前的 Hermes 回复</div>
+                  )}
+                </div>
+
+                {replyCount > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="conversation-replies-toggle ui-font"
+                      onClick={() => toggleReplyGroup(group.id)}
+                      aria-expanded={isExpanded}
+                    >
+                      <Icon
+                        name="chevronRight"
+                        size={13}
+                        className={`conversation-replies-chevron${isExpanded ? " open" : ""}`}
+                      />
+                      <span>Hermes 回复 {replyCount} 条</span>
+                      <span className="conversation-replies-action">
+                        {hasStreamingReply ? "回复中" : isExpanded ? "收起" : "展开"}
+                      </span>
+                    </button>
+                    {isExpanded && (
+                      <div className="conversation-replies">
+                        {group.assistants.map((reply) => (
+                          <MessageBubble
+                            key={reply.id}
+                            message={reply}
+                            isLastAssistant={reply.id === lastAssistantId}
+                            streaming={streaming}
+                            showTools={showTools}
+                            showThink={showThink}
+                            onRetry={onRetryLastMessage}
+                            model={currentModel}
+                            memoryLoaded={memoryLoaded}
+                            assistantIndex={assistantIndexMap.get(reply.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="compare-empty-answer ui-font">
-                    等待 Hermes 回答…
-                  </div>
+                  <div className="conversation-replies-empty ui-font">等待 Hermes 回复…</div>
                 )}
-              </div>
-              <div className="compare-pane compare-pane-user">
-                {pair.user ? (
-                  <MessageBubble
-                    message={pair.user}
-                    isLastAssistant={false}
-                    streaming={false}
-                    showTools={showTools}
-                    showThink={showThink}
-                    onRetry={onRetryLastMessage}
-                  />
-                ) : (
-                  <div className="compare-empty-question ui-font">
-                    未找到对应提问
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+              </section>
+            );
+          })}
           {renderErrorNotice()}
           <div ref={messagesEndRef} />
         </div>

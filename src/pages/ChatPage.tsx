@@ -210,7 +210,11 @@ export default function ChatPage({ apiKeyConfigured = true }: { apiKeyConfigured
   const [workingDir, setWorkingDir] = useState<string | null>(() => localStorage.getItem("hermes_working_dir"));
   const [fileTreeOpen, setFileTreeOpen] = useState(false);
   const [showTools, setShowTools] = useState<boolean>(() => localStorage.getItem("hermes_show_tools") === "true");
-  const [compareView, setCompareView] = useState<boolean>(() => localStorage.getItem("hermes_compare_view") === "true");
+  const [repliesCollapsed, setRepliesCollapsed] = useState<boolean>(
+    () =>
+      localStorage.getItem("hermes_replies_collapsed") === "true" ||
+      localStorage.getItem("hermes_compare_view") === "true"
+  );
   const [showThink, setShowThink] = useState<boolean>(() => localStorage.getItem("hermes_show_think") !== "false");
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [snapshotPanelOpen, setSnapshotPanelOpen] = useState(false);
@@ -1222,11 +1226,12 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
             return next;
           });
         }}
-        compareView={compareView}
-        onToggleCompareView={() => {
-          setCompareView((v) => {
+        repliesCollapsed={repliesCollapsed}
+        onToggleRepliesCollapsed={() => {
+          setRepliesCollapsed((v) => {
             const next = !v;
-            localStorage.setItem("hermes_compare_view", String(next));
+            localStorage.setItem("hermes_replies_collapsed", String(next));
+            localStorage.removeItem("hermes_compare_view");
             return next;
           });
         }}
@@ -1353,7 +1358,7 @@ const [sessionBadges, setSessionBadges] = useState<Record<string, "running" | "q
           pendingInputAppend={pendingInputAppend}
           workingDir={workingDir}
           showTools={showTools}
-          compareView={compareView}
+          repliesCollapsed={repliesCollapsed}
           showThink={showThink}
           contextPct={contextPct}
           onCompress={() => handlePtyWrite("/compress")}
