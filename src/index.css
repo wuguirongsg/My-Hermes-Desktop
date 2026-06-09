@@ -2012,26 +2012,14 @@ body {
 
 /* ── Collapsible conversation outline ── */
 .conversation-outline {
-  gap: 14px;
-  padding: 18px 24px 24px;
+  gap: 20px;
+  padding: 24px 28px;
 }
 
 .conversation-group {
-  overflow: hidden;
-  border: 1px solid var(--hairline-soft);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--surface-card) 52%, transparent);
-  box-shadow: var(--shadow-sm);
-}
-
-.conversation-question {
-  padding: 14px 16px;
-  background: color-mix(in srgb, var(--primary-glow) 42%, transparent);
-}
-
-.conversation-question .message-bubble.user {
-  width: 100%;
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .conversation-orphan-label {
@@ -2039,16 +2027,21 @@ body {
   font-size: 12px;
 }
 
+.conversation-reply-block {
+  width: min(100%, 920px);
+  margin-left: 0;
+}
+
 .conversation-replies-toggle {
   width: 100%;
-  min-height: 40px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 14px;
-  border: none;
-  border-top: 1px solid var(--hairline-soft);
-  background: color-mix(in srgb, var(--surface-soft) 64%, transparent);
+  padding: 8px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface-soft) 70%, transparent);
   color: var(--body);
   font-size: 12px;
   text-align: left;
@@ -2057,13 +2050,19 @@ body {
 }
 
 .conversation-replies-toggle:hover {
-  background: color-mix(in srgb, var(--primary-glow) 54%, var(--surface-soft));
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--hairline));
+  background: color-mix(in srgb, var(--primary-glow) 42%, var(--surface-soft));
   color: var(--body-strong);
+}
+
+.conversation-replies-toggle.expanded {
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
 }
 
 .conversation-replies-toggle:focus-visible {
   outline: 2px solid var(--primary);
-  outline-offset: -2px;
+  outline-offset: 2px;
 }
 
 .conversation-replies-chevron {
@@ -2082,26 +2081,24 @@ body {
   font-size: 11px;
 }
 
+.conversation-replies-count {
+  color: var(--muted);
+}
+
 .conversation-replies {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 16px;
-  border-top: 1px solid var(--hairline-soft);
-  background: color-mix(in srgb, var(--canvas) 76%, transparent);
+  padding: 18px 14px 14px;
+  border: 1px solid var(--hairline);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: color-mix(in srgb, var(--canvas) 82%, transparent);
 }
 
 .conversation-replies .message-bubble.assistant {
   padding-left: 0;
   padding-right: 0;
-}
-
-.conversation-replies-empty {
-  padding: 11px 14px;
-  border-top: 1px solid var(--hairline-soft);
-  color: var(--muted-soft);
-  background: color-mix(in srgb, var(--surface-soft) 48%, transparent);
-  font-size: 12px;
 }
 
 /* ── Streaming terminal preview ── */

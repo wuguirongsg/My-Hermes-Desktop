@@ -651,63 +651,86 @@ export default function ChatView({
             const replyCount = group.assistants.length;
 
             return (
-              <section className="conversation-group" key={group.id}>
-                <div className="conversation-question">
-                  {group.user ? (
-                    <MessageBubble
-                      message={group.user}
-                      isLastAssistant={false}
-                      streaming={false}
-                      showTools={showTools}
-                      showThink={showThink}
-                      onRetry={onRetryLastMessage}
-                    />
-                  ) : (
-                    <div className="conversation-orphan-label ui-font">会话开始前的 Hermes 回复</div>
-                  )}
-                </div>
-
-                {replyCount > 0 ? (
-                  <>
-                    <button
-                      type="button"
-                      className="conversation-replies-toggle ui-font"
-                      onClick={() => toggleReplyGroup(group.id)}
-                      aria-expanded={isExpanded}
-                    >
-                      <Icon
-                        name="chevronRight"
-                        size={13}
-                        className={`conversation-replies-chevron${isExpanded ? " open" : ""}`}
-                      />
-                      <span>Hermes 回复 {replyCount} 条</span>
-                      <span className="conversation-replies-action">
-                        {hasStreamingReply ? "回复中" : isExpanded ? "收起" : "展开"}
-                      </span>
-                    </button>
-                    {isExpanded && (
-                      <div className="conversation-replies">
-                        {group.assistants.map((reply) => (
-                          <MessageBubble
-                            key={reply.id}
-                            message={reply}
-                            isLastAssistant={reply.id === lastAssistantId}
-                            streaming={streaming}
-                            showTools={showTools}
-                            showThink={showThink}
-                            onRetry={onRetryLastMessage}
-                            model={currentModel}
-                            memoryLoaded={memoryLoaded}
-                            assistantIndex={assistantIndexMap.get(reply.id)}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
+              <div className="conversation-group" key={group.id}>
+                {group.user ? (
+                  <MessageBubble
+                    message={group.user}
+                    isLastAssistant={false}
+                    streaming={false}
+                    showTools={showTools}
+                    showThink={showThink}
+                    onRetry={onRetryLastMessage}
+                  />
                 ) : (
-                  <div className="conversation-replies-empty ui-font">等待 Hermes 回复…</div>
+                  <div className="conversation-orphan-label ui-font">会话开始前的 Hermes 回复</div>
                 )}
-              </section>
+
+                {replyCount > 0 && (
+                  <div className="conversation-reply-block">
+                    {!isExpanded ? (
+                      <button
+                        type="button"
+                        className="conversation-replies-toggle ui-font"
+                        onClick={() => toggleReplyGroup(group.id)}
+                        aria-expanded={false}
+                      >
+                        <Icon
+                          name="chevronRight"
+                          size={13}
+                          className="conversation-replies-chevron"
+                        />
+                        <Icon name="spark" size={12} />
+                        <span>Hermes 回复</span>
+                        {replyCount > 1 && (
+                          <span className="conversation-replies-count">{replyCount} 条</span>
+                        )}
+                        <span className="conversation-replies-action">
+                          {hasStreamingReply ? "回复中" : "点击展开"}
+                        </span>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="conversation-replies-toggle expanded ui-font"
+                          onClick={() => toggleReplyGroup(group.id)}
+                          aria-expanded={true}
+                        >
+                          <Icon
+                            name="chevronRight"
+                            size={13}
+                            className="conversation-replies-chevron open"
+                          />
+                          <Icon name="spark" size={12} />
+                          <span>Hermes 回复</span>
+                          {replyCount > 1 && (
+                            <span className="conversation-replies-count">{replyCount} 条</span>
+                          )}
+                          <span className="conversation-replies-action">
+                            {hasStreamingReply ? "回复中" : "收起"}
+                          </span>
+                        </button>
+                        <div className="conversation-replies">
+                          {group.assistants.map((reply) => (
+                            <MessageBubble
+                              key={reply.id}
+                              message={reply}
+                              isLastAssistant={reply.id === lastAssistantId}
+                              streaming={streaming}
+                              showTools={showTools}
+                              showThink={showThink}
+                              onRetry={onRetryLastMessage}
+                              model={currentModel}
+                              memoryLoaded={memoryLoaded}
+                              assistantIndex={assistantIndexMap.get(reply.id)}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             );
           })}
           {renderErrorNotice()}
